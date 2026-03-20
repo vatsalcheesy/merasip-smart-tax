@@ -1,0 +1,2599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MeraSIP S.M.A.R.T Tax Harvesting · Trustner Asset Services</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;background:#F4F6F9;color:#111827}
+:root{
+  --navy:#1B3A6B;--navyD:#2E5299;--navyP:#E8EEF8;
+  --green:#0A7C4E;--greenP:#F0FAF5;
+  --red:#B91C1C;--redP:#FEF2F2;
+  --amber:#92400E;--amberP:#FFFBEB;
+  --teal:#0D6E8A;--tealP:#EDF7FA;
+  --ink:#111827;--ink2:#374151;--ink3:#6B7280;
+  --bg0:#fff;--bg1:#FAFBFC;--bg2:#F4F6F9;--bg3:#EDF0F5;
+  --border:#D1D5DB;
+}
+input,select,textarea,button{font-family:inherit;font-size:13px}
+button{cursor:pointer}
+.hidden{display:none!important}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:14px;height:14px;border:3px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
+.screen{display:none;min-height:100vh}
+.screen.active{display:block}
+/* NAV */
+.nav{background:var(--navy);height:50px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-brand{color:#fff;font-weight:900;font-size:16px}
+.nav-title{color:rgba(255,255,255,.4);font-size:11px;margin-left:10px}
+.nav-actions{display:flex;gap:6px}
+/* BUTTONS */
+.btn{border:none;border-radius:7px;padding:7px 14px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .15s}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-outline{background:transparent;color:var(--navy);border:1.5px solid var(--navy)}
+.btn-ghost{background:var(--bg2);color:var(--ink2);border:1px solid var(--border)}
+.btn-success{background:var(--green);color:#fff}
+.btn-danger{background:var(--red);color:#fff}
+.btn-amber{background:#D97706;color:#fff}
+.btn-sm{padding:4px 10px;font-size:11px;border-radius:5px}
+.btn-lg{padding:11px 22px;font-size:14px}
+/* INPUTS */
+.inp-wrap{display:flex;flex-direction:column;gap:3px}
+.inp-label{font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.04em}
+input[type=text],input[type=number],input[type=date],select{
+  border:1px solid var(--border);border-radius:6px;padding:7px 9px;
+  background:var(--bg0);color:var(--ink);width:100%;outline:none
+}
+input:focus,select:focus,textarea:focus{border-color:var(--navy)}
+textarea{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg0);color:var(--ink);outline:none;resize:vertical;line-height:1.5}
+/* CARDS */
+.card{background:var(--bg0);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:14px;width:100%;max-width:580px;padding:24px;max-height:88vh;overflow-y:auto}
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700}
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+th{padding:6px 8px;text-align:left;font-size:10px;font-weight:700;color:var(--ink3);border-bottom:1px solid var(--border);background:var(--bg3);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--border)}
+/* FUND ROW */
+.fund-row{border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;background:#fff}
+.fund-row-header{padding:12px 14px}
+.fund-row-actions{padding:7px 14px;background:var(--bg1);border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.fund-row-remark{padding:10px 14px;border-top-width:1px;border-top-style:solid}
+/* PROGRESS BAR */
+.progress-bar{height:8px;border-radius:4px;background:var(--bg3);overflow:hidden;margin:6px 0}
+.progress-fill{height:100%;border-radius:4px;transition:width .3s}
+/* GRID */
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.flex{display:flex;align-items:center}
+.flex-wrap{display:flex;flex-wrap:wrap;align-items:center}
+.gap-6{gap:6px}.gap-8{gap:8px}.gap-10{gap:10px}.gap-12{gap:12px}
+.muted{color:var(--ink3)}
+.bold{font-weight:700}
+.small{font-size:11px}
+.xsmall{font-size:10px}
+@media print{
+  .no-print{display:none!important}
+  #harvest-plan-container{display:block!important}
+  #harvest-plan-body{display:block!important}
+  #harvest-plan-container .card{break-inside:avoid;border:1px solid #333!important}
+  #harvest-plan-container table{font-size:10px}
+  #harvest-plan-container th,#harvest-plan-container td{padding:4px 6px!important}
+}
+</style>
+</head>
+<body>
+
+<!-- HOME SCREEN -->
+<div id="screen-home" class="screen active" style="min-height:100vh;background:var(--navy);display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="text-align:center;max-width:560px">
+    <div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:12px;font-family:monospace">TRUSTNER ASSET SERVICES · ARN-286886 · EUIN: E092119</div>
+    <div style="font-size:48px;font-weight:900;color:#fff;line-height:1">MeraSIP</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.5);margin:8px 0 28px">S.M.A.R.T Tax Harvesting · Trustner Fund Selection March 2026</div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-bottom:24px;flex-wrap:wrap">
+      <button class="btn btn-primary" style="background:#fff;color:var(--navy);border-radius:10px;padding:14px 28px;font-size:14px;flex:1 1 160px;max-width:220px" onclick="openUpload()">
+        📤 Upload CAS / PDF<div style="font-size:10px;font-weight:400;color:var(--navyD);margin-top:3px">CAMS · KFintech · NSDL</div>
+      </button>
+      <button class="btn" style="background:rgba(255,255,255,.1);color:#fff;border:1.5px solid rgba(255,255,255,.25);border-radius:10px;padding:14px 28px;font-size:14px;flex:1 1 160px;max-width:220px" onclick="showScreen('data')">
+        ✏️ Manual Entry<div style="font-size:10px;font-weight:400;color:rgba(255,255,255,.45);margin-top:3px">Enter details directly</div>
+      </button>
+    </div>
+    <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
+      <span style="font-size:10px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);padding:3px 10px;border-radius:14px;border:1px solid rgba(255,255,255,.12)">🏆 Trustner 2026</span>
+      <span style="font-size:10px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);padding:3px 10px;border-radius:14px;border:1px solid rgba(255,255,255,.12)">💰 LTCG Optimiser</span>
+      <span style="font-size:10px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);padding:3px 10px;border-radius:14px;border:1px solid rgba(255,255,255,.12)">🤖 AI Advisory</span>
+      <span style="font-size:10px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);padding:3px 10px;border-radius:14px;border:1px solid rgba(255,255,255,.12)">🖨 Print Report</span>
+    </div>
+    <div style="background:rgba(255,255,255,.05);border-radius:10px;padding:12px 16px;text-align:left">
+      <div style="font-size:9px;color:rgba(255,255,255,.35);margin-bottom:8px;font-family:monospace">TOP PICKS — MARCH 2026</div>
+      <div class="grid-2">
+        <div style="border-radius:6px;padding:6px 8px;background:rgba(255,255,255,.07)"><div style="font-size:9px;color:rgba(255,255,255,.35)">LARGE CAP</div><div style="font-size:11px;color:#fff;font-weight:700">Nippon India Large Cap</div><div style="font-size:10px;color:#86EFAC;font-weight:700">17.5% 5Y ↑</div></div>
+        <div style="border-radius:6px;padding:6px 8px;background:rgba(255,255,255,.07)"><div style="font-size:9px;color:rgba(255,255,255,.35)">MID CAP</div><div style="font-size:11px;color:#fff;font-weight:700">HDFC Mid Cap Opp.</div><div style="font-size:10px;color:#86EFAC;font-weight:700">22.8% 3Y ↑</div></div>
+        <div style="border-radius:6px;padding:6px 8px;background:rgba(255,255,255,.07)"><div style="font-size:9px;color:rgba(255,255,255,.35)">FLEXI CAP</div><div style="font-size:11px;color:#fff;font-weight:700">HDFC Flexi Cap</div><div style="font-size:10px;color:#86EFAC;font-weight:700">20.5% 5Y ↑</div></div>
+        <div style="border-radius:6px;padding:6px 8px;background:rgba(255,255,255,.07)"><div style="font-size:9px;color:rgba(255,255,255,.35)">MULTI CAP</div><div style="font-size:11px;color:#fff;font-weight:700">Kotak Multicap</div><div style="font-size:10px;color:#86EFAC;font-weight:700">24.6% 3Y ↑</div></div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:rgba(255,255,255,.2);margin-top:14px;font-family:monospace">AMFI Registered MFD · merasip.com · Guwahati, Assam</div>
+  </div>
+</div>
+
+<!-- DATA ENTRY SCREEN -->
+<div id="screen-data" class="screen">
+  <div class="nav no-print">
+    <div class="flex"><span class="nav-brand">MeraSIP</span><span class="nav-title">Portfolio Entry</span></div>
+    <div class="nav-actions">
+      <button class="btn btn-outline btn-sm" onclick="openUpload()">📤 Import</button>
+      <button class="btn btn-ghost btn-sm" onclick="showScreen('home')">Home</button>
+      <button class="btn btn-primary btn-sm" onclick="showScreen('analysis')">Analyse →</button>
+    </div>
+  </div>
+  <div style="max-width:1100px;margin:0 auto;padding:16px 14px">
+    <div class="card">
+      <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:10px">👤 CLIENT PROFILE</div>
+      <div class="grid-auto">
+        <div class="inp-wrap"><label class="inp-label">Name</label><input id="inp-name" type="text" placeholder="Rajesh Sharma" oninput="recompute()"></div>
+        <div class="inp-wrap"><label class="inp-label">PAN</label><input id="inp-pan" type="text" placeholder="ABCDE1234F" style="font-family:monospace" oninput="recompute()"></div>
+        <div class="inp-wrap"><label class="inp-label">Age</label><input id="inp-age" type="number" placeholder="42" oninput="recompute()"></div>
+        <div class="inp-wrap"><label class="inp-label">Tax Regime</label><select id="inp-regime" onchange="recompute()"><option>New Regime</option><option>Old Regime</option></select></div>
+        <div class="inp-wrap"><label class="inp-label">Risk Profile</label><select id="inp-risk" onchange="recompute()"><option>Conservative</option><option>Moderate</option><option selected>Moderate-Aggressive</option><option>Aggressive</option></select></div>
+        <div class="inp-wrap"><label class="inp-label">Horizon</label><select id="inp-horizon" onchange="recompute()"><option>0-3 Years</option><option>3-5 Years</option><option selected>5+ Years</option></select></div>
+        <div class="inp-wrap"><label class="inp-label">Goal</label><select id="inp-goal" onchange="recompute()"><option selected>Wealth Creation</option><option>Retirement</option><option>Child Education</option><option>Home Purchase</option><option>Other</option></select></div>
+        <div class="inp-wrap"><label class="inp-label">LTCG Realised (₹)</label><input id="inp-ltcg" type="number" value="0" placeholder="0" oninput="recompute()"></div>
+        <div class="inp-wrap"><label class="inp-label">Tax Slab (%)</label><select id="inp-slab" onchange="recompute()"><option value="0">0% (≤₹3L)</option><option value="5">5% (₹3-7L)</option><option value="10">10% (₹7-10L)</option><option value="15">15% (₹10-12L)</option><option value="20">20% (₹12-15L)</option><option value="25">25% (₹15-16L)</option><option value="30" selected>30% (>₹16L)</option></select></div>
+      </div>
+    </div>
+    <div id="taxbar-data"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:800;color:var(--navy)">📂 Holdings (<span id="fund-count">1</span>)</div>
+      <div class="flex gap-6">
+        <button class="btn btn-outline btn-sm" onclick="openUpload()">📤 Import</button>
+        <button class="btn btn-primary btn-sm" onclick="addFund()">＋ Add Fund</button>
+      </div>
+    </div>
+    <div id="funds-container"></div>
+    <div style="height:16px"></div>
+    <div class="flex gap-8">
+      <button class="btn btn-ghost" onclick="addFund()">＋ Add Fund</button>
+      <button class="btn btn-primary btn-lg" onclick="showScreen('analysis')">🔍 Generate Advisory →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYSIS SCREEN -->
+<div id="screen-analysis" class="screen">
+  <div class="nav no-print">
+    <div class="flex"><span class="nav-brand">MeraSIP</span><span id="analysis-title" class="nav-title">Analysis</span></div>
+    <div class="nav-actions">
+      <button class="btn btn-outline btn-sm" onclick="showScreen('data')">← Edit</button>
+      <button class="btn btn-success btn-sm" onclick="showScreen('report')">Report →</button>
+    </div>
+  </div>
+  <div style="max-width:1000px;margin:0 auto;padding:16px 14px">
+    <div id="analysis-summary" style="background:var(--navy);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap"></div>
+    <div class="card" style="border:2px solid var(--navy)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div><div style="font-size:14px;font-weight:800;color:var(--navy)">🤖 Full Portfolio Advisory</div><div style="font-size:11px;color:var(--ink3)">AI-powered with Trustner fund recommendations</div></div>
+        <button class="btn btn-primary" id="group-ai-btn" onclick="runGroupAI()">Generate Advisory</button>
+        <button class="btn btn-amber" onclick="generateHarvestPlan()" style="margin-left:6px">📊 Tax Harvest Plan</button>
+      </div>
+      <div id="group-ai-status" class="hidden" style="background:var(--navyP);border-radius:8px;padding:12px;font-size:12px;color:var(--navy);font-weight:600"></div>
+      <div id="group-ai-result" style="display:none;font-size:13px;line-height:1.85;color:var(--ink);white-space:pre-wrap;font-family:Georgia,serif;border-top:1px solid var(--border);padding-top:10px;margin-top:8px"></div>
+      <div id="group-ai-placeholder" style="text-align:center;padding:24px 0;color:var(--ink3);font-size:12px">Click "Generate Advisory" for personalised tax harvesting advice</div>
+    </div>
+    <div id="harvest-plan-container" style="display:none"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--ink3);margin-bottom:8px">FUND-BY-FUND ANALYSIS</div>
+    <div id="analysis-funds"></div>
+  </div>
+</div>
+
+<!-- REPORT SCREEN -->
+<div id="screen-report" class="screen">
+  <div class="nav no-print">
+    <div class="flex"><span class="nav-brand">MeraSIP</span><span class="nav-title">Final Report</span></div>
+    <div class="nav-actions">
+      <button class="btn btn-outline btn-sm" onclick="showScreen('analysis')">← Analysis</button>
+      <button class="btn btn-outline btn-sm" onclick="showScreen('data')">← Edit</button>
+      <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print</button>
+    </div>
+  </div>
+  <div style="max-width:880px;margin:0 auto;padding:20px 14px">
+    <div id="report-cover" style="background:var(--navy);border-radius:12px;padding:24px 28px;margin-bottom:16px;color:#fff"></div>
+    <div id="report-client-profile" style="margin-bottom:14px"></div>
+    <div id="report-tax-summary" style="margin-bottom:14px"></div>
+    <div id="report-advisory" style="display:none" class="card" style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:8px;border-bottom:2px solid var(--navy);padding-bottom:6px">CONSOLIDATED PORTFOLIO ADVISORY</div>
+      <div id="report-advisory-text" style="font-size:13px;line-height:1.85;color:var(--ink);white-space:pre-wrap;font-family:Georgia,serif"></div>
+    </div>
+    <div class="card" style="overflow:hidden;padding:0;margin-bottom:14px">
+      <div style="background:var(--navy);padding:10px 16px"><div style="color:#fff;font-weight:800;font-size:13px">Fund-by-Fund Analysis & Action Plan</div></div>
+      <div style="overflow-x:auto"><table id="report-table"><thead><tr><th>Fund</th><th>Category</th><th>Invested</th><th>Current</th><th>Gain</th><th>LTCG</th><th>STCG</th><th>Tax Bucket</th><th>Action</th><th>Recommendation</th></tr></thead><tbody id="report-tbody"></tbody></table></div>
+    </div>
+    <div id="report-harvest-plan" style="margin-bottom:14px"></div>
+    <div style="background:var(--navyP);border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:8px">🏆 TRUSTNER RECOMMENDED FUNDS — MARCH 2026</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px" id="report-trustner"></div>
+    </div>
+    <div style="text-align:center;padding:14px 10px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--ink3);margin-bottom:2px">MeraSIP by Trustner Asset Services Pvt. Ltd. | ARN-286886 | EUIN: E092119 | CIN: U66301AS2023PTC025705</div>
+      <div style="font-size:10px;color:var(--ink3);margin-bottom:4px">Sethi Trust, Unit 2, 4th Floor, G S Road, Bhangagarh, Dispur, Guwahati – 781005 · +91 60039 03731 · merasip.com</div>
+      <div style="font-size:10px;color:var(--ink3);font-style:italic;max-width:700px;margin:0 auto;line-height:1.6">Mutual fund investments are subject to market risks. Read all scheme related documents carefully. AMFI Registered MFD, not SEBI RIA. Tax advice is advisory in nature.</div>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div id="upload-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div><div style="font-size:15px;font-weight:800;color:var(--navy)">📤 Import Portfolio</div><div style="font-size:11px;color:var(--ink3)">AI extracts fund data automatically</div></div>
+      <button onclick="closeUpload()" style="background:var(--bg2);border:none;border-radius:6px;width:30px;height:30px;font-size:17px;color:var(--ink3)">×</button>
+    </div>
+    <div id="upload-step-input">
+      <div style="margin-bottom:12px">
+        <label class="inp-label" style="display:block;margin-bottom:6px">📁 Upload File (PDF · CSV · TXT)</label>
+        <input type="file" id="upload-file-input" accept=".pdf,.csv,.txt,.xlsx" onchange="handleFileUpload(this)" style="border:1px solid var(--border);border-radius:7px;padding:8px 10px;width:100%;background:var(--bg1)"/>
+      </div>
+      <div style="text-align:center;color:var(--ink3);font-size:12px;margin:10px 0">— or paste text below —</div>
+      <textarea id="upload-paste" rows="7" placeholder="Paste CAS / portfolio text here...&#10;&#10;Works with CAMS · KFintech · MF Central · NSDL · CDSL" style="width:100%;font-family:monospace"></textarea>
+      <div id="upload-error" class="hidden" style="margin-top:8px;background:var(--redP);border-radius:7px;padding:8px 12px;font-size:12px;color:var(--red)"></div>
+      <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">
+        <button class="btn btn-ghost" onclick="closeUpload()">Cancel</button>
+        <button class="btn btn-primary" onclick="runExtract()">Extract Data →</button>
+      </div>
+    </div>
+    <div id="upload-step-loading" class="hidden" style="padding:16px 0">
+      <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px"><span class="spinner" style="color:var(--navy)"></span>AI Reading Portfolio...</div>
+      <div id="upload-log" style="background:var(--bg2);border-radius:8px;padding:12px;font-family:monospace;font-size:11px;color:var(--ink3);white-space:pre-wrap;line-height:1.7;max-height:200px;overflow-y:auto">Starting...</div>
+    </div>
+    <div id="upload-step-preview" class="hidden">
+      <div id="upload-preview-summary" style="background:var(--greenP);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--green);font-weight:700"></div>
+      <div style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:12px">
+        <table><thead><tr><th>Fund</th><th>Category</th><th>Invested</th><th>Current</th></tr></thead>
+        <tbody id="upload-preview-tbody"></tbody></table>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <button class="btn btn-ghost" onclick="uploadReset()">← Re-upload</button>
+        <button class="btn btn-success" onclick="applyExtracted()">Use This Data →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Clear any old invalid cached key
+if(localStorage.getItem('merasip_api_key')==='AIzaSyDl4GBg_kvu04KdeShVW3x6H0IoBSTd4E8') localStorage.removeItem('merasip_api_key');
+// ═══════════════════════════════════════════════
+// DATA & CONSTANTS
+// ═══════════════════════════════════════════════
+const LTCG_LIMIT = 125000;
+const MC = ["#1B3A6B","#065F46","#5B21B6","#92400E","#1D4ED8","#9D174D","#0F766E","#B45309"];
+const TRUSTNER = {
+  "Large Cap":[
+    {rank:1,name:"Nippon India Large Cap Fund",aum:"₹50,107 Cr",ret5y:17.5,ret3y:19.6,sharpe:0.36,badge:"#1 Pick",why:"Consistent alpha over Nifty 50, 5Y. Best growth+stability blend."},
+    {rank:2,name:"ICICI Pru Large Cap Fund",aum:"₹76,646 Cr",ret5y:15.9,ret3y:18.4,sharpe:0.48,badge:"#2 Pick",why:"Best Sharpe (0.48) — top risk-adjusted return. Proven process."},
+  ],
+  "Large & Mid Cap":[
+    {rank:1,name:"ICICI Pru Large & Mid Cap Fund",aum:"₹27,445 Cr",ret5y:20.2,badge:"#1 Pick",why:"Best 5Y returns (20.2%). Ideal for 5+ year moderate-aggressive investors."},
+    {rank:2,name:"HDFC Large & Mid Cap Fund",aum:"₹32,000 Cr",ret5y:19.1,badge:"#2 Pick",why:"Consistent track record. Solid core holding."},
+  ],
+  "Mid Cap":[
+    {rank:1,name:"HDFC Mid Cap Opportunities Fund",aum:"₹92,187 Cr",ret3y:22.8,badge:"#1 Pick",why:"India's largest mid-cap. 22.8% CAGR 3Y. Delivers across market cycles."},
+    {rank:2,name:"Motilal Oswal Midcap Fund",aum:"₹22,000 Cr",badge:"#2 Pick",why:"Quality-growth philosophy. Great diversifier alongside HDFC Mid Cap."},
+  ],
+  "Small Cap":[
+    {rank:1,name:"Mirae Asset Small Cap Fund",aum:"₹3,103 Cr",ret1y:20.3,badge:"#1 Pick",why:"Best 1Y (+20.3%). Small AUM = agility. For aggressive 7+ year investors."},
+    {rank:2,name:"Nippon India Small Cap Fund",aum:"₹61,000 Cr",badge:"#2 Pick",why:"Most experienced team. 200+ stocks, lower concentration risk."},
+  ],
+  "Flexi Cap":[
+    {rank:1,name:"HDFC Flexi Cap Fund",aum:"₹97,452 Cr",ret5y:20.5,badge:"#1 Pick",why:"India's largest MF. 20.5% CAGR 5Y. If you own one equity fund, this is it."},
+    {rank:2,name:"Parag Parikh Flexi Cap Fund",aum:"₹82,000 Cr",badge:"#2 Pick",why:"Global diversification up to 35%. Low churn. India + global in one fund."},
+  ],
+  "Multi Cap":[
+    {rank:1,name:"Kotak Multicap Fund",aum:"₹22,710 Cr",ret3y:24.6,badge:"#1 Pick",why:"Highest 3Y CAGR (24.6%). True 25-25-25% diversification."},
+    {rank:2,name:"Nippon India Multi Cap Fund",aum:"₹38,000 Cr",badge:"#2 Pick",why:"Strong AUM, experienced team across all market caps."},
+  ],
+  "Aggressive Hybrid":[
+    {rank:1,name:"ICICI Pru Equity & Debt Fund",aum:"₹49,257 Cr",ret5y:18.9,badge:"#1 Pick",why:"18.9% CAGR 5Y with lower volatility. Best for moderate investors."},
+    {rank:2,name:"SBI Equity Hybrid Fund",aum:"₹72,000 Cr",badge:"#2 Pick",why:"SBI flagship hybrid. Ideal for first-time or 3-5Y investors."},
+  ],
+  "Balanced Advantage":[
+    {rank:1,name:"HDFC Balanced Advantage Fund",aum:"₹1,06,821 Cr",ret5y:17.1,badge:"#1 Pick",why:"India's largest fund. 17.1% CAGR 5Y. Go-to for 50+ or 3-5Y goals."},
+    {rank:2,name:"ICICI Pru Balanced Advantage Fund",aum:"₹58,000 Cr",badge:"#2 Pick",why:"Model-driven. Strong across bull and bear markets."},
+  ],
+  "Multi Asset":[
+    {rank:1,name:"Quant Multi Asset Fund",aum:"₹4,763 Cr",ret5y:25.3,badge:"#1 Pick",why:"Best 5Y (25.3%). Dynamic equity+debt+gold. One fund does it all."},
+  ],
+  "ELSS":[
+    {rank:1,name:"Mirae Asset ELSS Tax Saver Fund",aum:"₹25,000 Cr",badge:"#1 ELSS",why:"Best ELSS, Old Regime. Post lock-in switch to Flexi Cap if New Regime."},
+    {rank:2,name:"Quant ELSS Tax Saver Fund",aum:"₹12,000 Cr",badge:"#2 ELSS",why:"Top 5Y ELSS. Only relevant for Old Tax Regime."},
+  ],
+  "Index":[
+    {rank:1,name:"Nippon India Nifty 50 Index Fund",aum:"₹18,000 Cr",badge:"#1 Index",why:"Lowest cost Nifty 50 (~0.20% TER). Switch here if active fund underperforms."},
+    {rank:2,name:"UTI Nifty Next 50 Index Fund",aum:"₹22,000 Cr",badge:"#2 Index",why:"Mid-large blend at index cost. Outperformed Nifty 50 over 10Y."},
+  ],
+  "Value/Contra":[
+    {rank:1,name:"DSP Value Fund",aum:"₹1,414 Cr",ret5y:16.5,badge:"#1 Value",why:"Top value fund. Buys strong companies at discount. 16.5% CAGR 5Y."},
+    {rank:2,name:"Kotak Contra Fund",aum:"₹5,087 Cr",ret5y:17.5,badge:"#1 Contra",why:"Contrarian. Invests in out-of-favour sectors. 17.5% CAGR 5Y."},
+  ],
+};
+const CAT_OPTIONS = [
+  {v:"large",l:"Large Cap"},{v:"large-mid",l:"Large & Mid Cap"},
+  {v:"mid",l:"Mid Cap"},{v:"small",l:"Small Cap"},
+  {v:"flexi",l:"Flexi Cap"},{v:"multi",l:"Multi Cap"},
+  {v:"hybrid",l:"Aggressive Hybrid"},{v:"baf",l:"Balanced Advantage"},
+  {v:"elss",l:"ELSS"},{v:"index",l:"Index Fund"},
+  {v:"multi-asset",l:"Multi Asset"},{v:"value",l:"Value/Contra"},
+  {v:"sector",l:"Sector/Thematic"},{v:"intl-fof",l:"International/FOF"},
+  {v:"debt",l:"Debt Fund"},
+];
+const CAT_TO_TRUSTNER = {
+  large:"Large Cap","large-mid":"Large & Mid Cap",mid:"Mid Cap",small:"Small Cap",
+  flexi:"Flexi Cap",multi:"Multi Cap",hybrid:"Aggressive Hybrid",baf:"Balanced Advantage",
+  elss:"ELSS",index:"Index","multi-asset":"Multi Asset",value:"Value/Contra",
+  sector:"Sector/Thematic","intl-fof":"International/FOF",debt:"Debt",
+};
+const AMC_BRANDS = ["HDFC","ICICI Pru","Nippon India","Mirae Asset","Kotak","Axis","SBI","Parag Parikh","Motilal Oswal","UTI","DSP","Franklin","WhiteOak","Quant","Edelweiss","Canara","Tata","Aditya Birla","PGIM","Bandhan","Invesco","HSBC","Sundaram","JM","LIC"];
+
+const SWITCH_TARGETS = {
+  'axis': ['Axis Bluechip Fund', 'Axis Flexi Cap Fund'],
+  'hdfc': ['HDFC Top 100 Fund', 'HDFC Flexi Cap Fund'],
+  'icici': ['ICICI Pru Bluechip Fund', 'ICICI Pru Flexi Cap Fund'],
+  'sbi': ['SBI Bluechip Fund', 'SBI Flexi Cap Fund'],
+  'kotak': ['Kotak Bluechip Fund', 'Kotak Flexi Cap Fund'],
+  'nippon': ['Nippon India Large Cap Fund', 'Nippon India Flexi Cap Fund'],
+  'mirae': ['Mirae Asset Large Cap Fund', 'Mirae Asset Flexi Cap Fund'],
+  'canara': ['Canara Robeco Bluechip Fund', 'Canara Robeco Flexi Cap Fund'],
+  'dsp': ['DSP Top 100 Fund', 'DSP Flexi Cap Fund'],
+  'bandhan': ['Bandhan Large Cap Fund', 'Bandhan Flexi Cap Fund'],
+  'pgim': ['PGIM India Large Cap Fund', 'PGIM India Flexi Cap Fund'],
+  'motilal': ['Motilal Oswal Large Cap Fund', 'Motilal Oswal Flexi Cap Fund'],
+  'mahindra': ['Mahindra Manulife Large Cap Fund', 'Mahindra Manulife Flexi Cap Fund'],
+  'tata': ['Tata Large Cap Fund', 'Tata Flexi Cap Fund'],
+  'utm': ['UTI Large Cap Fund', 'UTI Flexi Cap Fund'],
+};
+const REINVEST_SUGGESTIONS = {
+  conservative: [
+    { name: 'ICICI Pru Equity & Debt Fund', cat: 'Aggressive Hybrid', ret: '18.9% 5Y', why: 'Stable equity+debt mix, strong downside protection' },
+    { name: 'HDFC Balanced Advantage Fund', cat: 'BAF', ret: '17.1% 5Y', why: 'Auto asset allocation based on market valuation' },
+    { name: 'Kotak Equity Hybrid Fund', cat: 'Aggressive Hybrid', ret: '16.5% 5Y', why: 'Conservative equity allocation with debt cushion' },
+  ],
+  moderate: [
+    { name: 'ICICI Pru Multi Asset Fund', cat: 'Multi Asset', ret: '20.1% 5Y', why: 'Equity+Debt+Gold+Silver — all-weather diversification, lower volatility' },
+    { name: 'HDFC Multi Asset Fund', cat: 'Multi Asset', ret: '18.7% 3Y', why: 'Strong multi-asset allocation with equity tilt for growth' },
+    { name: 'Quant Multi Asset Fund', cat: 'Multi Asset', ret: '25.3% 5Y', why: 'Best returns in category — dynamic equity+debt+gold mix' },
+    { name: 'HDFC Flexi Cap Fund', cat: 'Flexi Cap', ret: '20.5% 5Y', why: 'Flexible allocation across market caps' },
+    { name: 'Kotak Multicap Fund', cat: 'Multi Cap', ret: '24.6% 3Y', why: 'Mandatory diversification across large/mid/small' },
+  ],
+  aggressive: [
+    { name: 'HDFC Mid Cap Opportunities Fund', cat: 'Mid Cap', ret: '22.8% 3Y', why: 'Top mid-cap fund with strong track record' },
+    { name: 'Nippon India Small Cap Fund', cat: 'Small Cap', ret: '25.2% 5Y', why: 'Best-in-class small cap with huge AUM' },
+    { name: 'Parag Parikh Flexi Cap Fund', cat: 'Flexi Cap', ret: '19.8% 5Y', why: 'Global diversification + domestic equity' },
+  ],
+};
+const EQUITY_CATS = ['large','large-mid','mid','small','flexi','multi','hybrid','baf','elss','index','sector','value'];
+
+// ═══════════════════════════════════════════════
+// APP STATE
+// ═══════════════════════════════════════════════
+let funds = [newFund()];
+let remarks = {};
+let portResults = [];
+let extractedPreview = null;
+let groupRemark = "";
+
+function newFund() {
+  const d = new Date(); d.setFullYear(d.getFullYear()-2);
+  return {name:"",category:"flexi",amcQuality:"strong",invested:0,current:0,
+          purchaseDate:d.toISOString().slice(0,10),performance:"good",switchTarget:""};
+}
+function getClient() {
+  return {
+    name: document.getElementById('inp-name').value,
+    pan: document.getElementById('inp-pan').value,
+    age: document.getElementById('inp-age').value,
+    regime: document.getElementById('inp-regime').value,
+    risk: document.getElementById('inp-risk').value,
+    horizon: document.getElementById('inp-horizon').value,
+    goal: document.getElementById('inp-goal').value,
+    ltcg: parseFloat(document.getElementById('inp-ltcg').value)||0,
+    slab: parseFloat(document.getElementById('inp-slab').value)||30,
+  };
+}
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+function holdingYears(d){if(!d)return 0;return(new Date()-new Date(d))/(1000*60*60*24*365.25);}
+function inr(v,signed){
+  const a=Math.abs(v),s=v<0?"-":signed&&v>0?"+":"";
+  if(a>=1e7)return s+"₹"+(a/1e7).toFixed(2)+" Cr";
+  if(a>=1e5)return s+"₹"+(a/1e5).toFixed(2)+" L";
+  if(a>=1e3)return s+"₹"+(a/1e3).toFixed(1)+"K";
+  return s+"₹"+a.toFixed(0);
+}
+function pct(v,signed){return (signed&&v>0?"+":"")+v.toFixed(1)+"%";}
+function gc(v){return v>=0?"var(--green)":"var(--red)";}
+function extractAMC(name){
+  const n=(name||"").toLowerCase();
+  return AMC_BRANDS.find(b=>n.includes(b.toLowerCase()))||name.split(" ")[0]||"";
+}
+function findInTrustner(name){
+  const n=(name||"").toLowerCase().replace(/[^a-z0-9 ]/g,"");
+  const nw=n.split(" ").filter(w=>w.length>2);
+  for(const cat of Object.values(TRUSTNER)){
+    for(const f of cat){
+      const fn=f.name.toLowerCase().replace(/[^a-z0-9 ]/g,"");
+      const fw=fn.split(" ").filter(w=>w.length>2);
+      const overlap=nw.filter(w=>fw.includes(w)).length;
+      if(overlap>=2)return f;
+    }
+  }
+  return null;
+}
+function findAlternatives(name,category){
+  const amc=extractAMC(name);
+  const catKey=CAT_TO_TRUSTNER[category];
+  const catFunds=catKey?TRUSTNER[catKey]||[]:[];
+  let sameAMC=null,otherAMC=null;
+  for(const f of catFunds){
+    if(f.name===name)continue;
+    if(!sameAMC&&f.name.toLowerCase().includes(amc.toLowerCase()))sameAMC=f;
+    else if(!otherAMC)otherAMC=f;
+  }
+  return {sameAMC,otherAMC};
+}
+
+// ═══════════════════════════════════════════════
+// TAX CLASSIFICATION (Income Tax Act FY 2025-26)
+// ═══════════════════════════════════════════════
+// Equity: STCG ≤12m @20%, LTCG >12m @12.5% (₹1.25L exempt)
+// Debt 50AA (bought ≥Apr 2023): All gains at slab rate, no LTCG
+// Debt Legacy (bought <Apr 2023): STCG ≤24m @slab, LTCG >24m @12.5%
+// Other MF (intl FOF, gold FOF, balanced hybrid): STCG ≤24m @slab, LTCG >24m @12.5%
+function getTaxBucket(category, fundName, txnDate) {
+  const isDebt = category === 'debt';
+  const isIntlFOF = category === 'intl-fof' || (/overseas|global|international|FOF/i.test(fundName) && !/domestic|india/i.test(fundName));
+  const isMultiAsset = category === 'multi-asset';
+  const isBalancedHybrid = category === 'hybrid' && /conservative|balanced\s*hybrid/i.test(fundName);
+
+  if (isDebt) {
+    // Check if bought before or after April 1, 2023
+    const d = txnDate ? new Date(txnDate) : null;
+    const apr2023 = new Date('2023-04-01');
+    if (!d || d >= apr2023) {
+      return { type:'debt50aa', ltcgDays:null, stcgRate:'slab', ltcgRate:null, label:'Sec 50AA (Slab)' };
+    } else {
+      return { type:'debtLegacy', ltcgDays:730, stcgRate:'slab', ltcgRate:0.125, label:'Debt (Legacy)' };
+    }
+  }
+  if (isIntlFOF || isMultiAsset || isBalancedHybrid) {
+    return { type:'other', ltcgDays:730, stcgRate:'slab', ltcgRate:0.125, label:'Other MF (24m)' };
+  }
+  // Equity-oriented: large, mid, small, flexi, multi, elss, index, hybrid(aggressive), baf
+  return { type:'equity', ltcgDays:365, stcgRate:0.20, ltcgRate:0.125, label:'Equity' };
+}
+
+function classifyTxnGain(gain, days, bucket) {
+  if (bucket.type === 'debt50aa') {
+    return { ltcg:0, stcg:gain }; // All at slab, no LTCG
+  }
+  if (bucket.ltcgDays && days >= bucket.ltcgDays) {
+    return { ltcg:gain, stcg:0 };
+  }
+  return { ltcg:0, stcg:gain };
+}
+
+// ═══════════════════════════════════════════════
+// ANALYSIS ENGINE
+// ═══════════════════════════════════════════════
+function analysePortfolio(fs, ltcgSoFar) {
+  let ltcgBooked = ltcgSoFar;
+  const results = new Array(fs.length);
+  const indexed = fs.map((f,i)=>({...f,_i:i}));
+  const losses = indexed.filter(f=>f.category!=="debt"&&holdingYears(f.purchaseDate)>=1&&(f.current-f.invested)<0);
+  const gains  = indexed.filter(f=>f.category!=="debt"&&holdingYears(f.purchaseDate)>=1&&(f.current-f.invested)>0)
+                        .sort((a,b)=>(a.current-a.invested)-(b.current-b.invested));
+  const others = indexed.filter(f=>f.category==="debt"||holdingYears(f.purchaseDate)<1||(f.category==="elss"&&holdingYears(f.purchaseDate)<3));
+
+  for(const f of losses){
+    const gain=f.current-f.invested,lossAmt=Math.abs(gain);
+    ltcgBooked=Math.max(ltcgSoFar-lossAmt,ltcgBooked);
+    const inT=findInTrustner(f.name),alts=findAlternatives(f.name,f.category);
+    let switchTo=null,mode="redeem";
+    if(alts.sameAMC){switchTo=alts.sameAMC;mode="switch-amc";}
+    else if(alts.otherAMC){switchTo=alts.otherAMC;}
+    results[f._i]={action:"LOSS-HARVEST 📉",color:"#B91C1C",bg:"#FEF2F2",gain,harvestAmt:lossAmt,
+      inTrustner:!!inT,trustnerMatch:inT,switchTo,mode,
+      rationale:"Loss of "+inr(lossAmt)+" — book it to offset gains. "+(mode==="switch-amc"?"Switch within "+extractAMC(f.name)+" AMC to "+switchTo.name+".":"Redeem & reinvest in "+(switchTo?switchTo.name:"best Trustner fund")+".")};
+  }
+  for(const f of gains){
+    const gain=f.current-f.invested,room=Math.max(0,LTCG_LIMIT-ltcgBooked);
+    const inT=findInTrustner(f.name),alts=findAlternatives(f.name,f.category);
+    if(room<=0){results[f._i]={action:"HOLD ✓",color:"#1B3A6B",bg:"#E8EEF8",gain,harvestAmt:0,inTrustner:!!inT,trustnerMatch:inT,switchTo:null,mode:"hold",rationale:"₹1,25,000 LTCG limit fully used this FY. Hold — revisit April 1st."};continue;}
+    const harvestAmt=Math.min(gain,room);
+    ltcgBooked+=harvestAmt;
+    if(inT){
+      results[f._i]={action:harvestAmt>=gain?"HARVEST & REINVEST ✅":"PARTIAL HARVEST ⚡",
+        color:harvestAmt>=gain?"#0A7C4E":"#0D6E8A",bg:harvestAmt>=gain?"#F0FAF5":"#EDF7FA",
+        gain,harvestAmt,inTrustner:true,trustnerMatch:inT,switchTo:null,mode:"reinvest-same",
+        rationale:"✅ "+f.name+" is Trustner #"+inT.rank+". Harvest ₹"+Math.round(harvestAmt).toLocaleString("en-IN")+" tax-free, save ₹"+Math.round(harvestAmt*0.125).toLocaleString("en-IN")+". Reinvest same fund."+(harvestAmt<gain?" Partial harvest only.":"")};
+    } else {
+      let switchTo=null,mode="redeem";
+      if(alts.sameAMC){switchTo=alts.sameAMC;mode="switch-amc";}
+      else if(alts.otherAMC){switchTo=alts.otherAMC;}
+      const lbl=harvestAmt>=gain?(mode==="switch-amc"?"SWITCH WITHIN AMC 🔄":"REDEEM & REINVEST 🔀"):(mode==="switch-amc"?"PARTIAL SWITCH 🔄":"PARTIAL REDEEM 🔀");
+      const col=mode==="switch-amc"?"#0D6E8A":"#92400E",bg=mode==="switch-amc"?"#EDF7FA":"#FFFBEB";
+      const rat=switchTo?(mode==="switch-amc"?"Switch within "+extractAMC(f.name)+" AMC → "+switchTo.name+" (Trustner #"+switchTo.rank+"). Book ₹"+Math.round(harvestAmt).toLocaleString("en-IN")+" tax-free.":"Redeem & invest in "+switchTo.name+" (Trustner #"+switchTo.rank+"). Book ₹"+Math.round(harvestAmt).toLocaleString("en-IN")+" tax-free. Reinvest same day."):"Not in Trustner. Book ₹"+Math.round(harvestAmt).toLocaleString("en-IN")+" tax-free.";
+      results[f._i]={action:lbl,color:col,bg,gain,harvestAmt,inTrustner:false,trustnerMatch:null,switchTo,mode,rationale:rat};
+    }
+  }
+  for(const f of others){
+    const yrs=holdingYears(f.purchaseDate),isELSS=f.category==="elss",isDebt=f.category==="debt";
+    let action,color,bg,rationale;
+    if(isELSS&&yrs<3){action="LOCKED 🔒";color="#6B7280";bg="#F3F4F6";rationale="ELSS lock-in: "+yrs.toFixed(1)+"/3 years done.";}
+    else if(isDebt){action="HOLD-DEBT";color="#92400E";bg="#FFFBEB";rationale="Debt fund — taxed at slab rate, not LTCG. Review allocation.";}
+    else{const ml=Math.max(0,12-(yrs*12));action="WAIT ⏳";color="#92400E";bg="#FFFBEB";rationale="Only "+(yrs*12).toFixed(0)+" months — wait "+ml.toFixed(0)+" more months for LTCG (20% STCG now vs 12.5% later).";}
+    results[f._i]={action,color,bg,gain:f.current-f.invested,harvestAmt:0,inTrustner:false,trustnerMatch:null,switchTo:null,mode:"hold",rationale};
+  }
+  for(let i=0;i<fs.length;i++){
+    if(!results[i])results[i]={action:"HOLD",color:"#1B3A6B",bg:"#E8EEF8",gain:0,harvestAmt:0,inTrustner:false,trustnerMatch:null,switchTo:null,mode:"hold",rationale:"No action required."};
+  }
+  return {results,ltcgBooked};
+}
+
+// ═══════════════════════════════════════════════
+// API CALLS
+// ═══════════════════════════════════════════════
+const _DEFAULT_KEY = 'AIzaSyD0fVKLFjAOlATGGx1-0h6fuIJfmZ3eOTU';
+function getApiKey() {
+  const inp = document.getElementById('anthropic-api-key');
+  let key = inp ? inp.value.trim() : '';
+  if (!key) key = localStorage.getItem('merasip_api_key') || '';
+  if (!key) key = _DEFAULT_KEY;
+  if (key && inp) { inp.value = key; localStorage.setItem('merasip_api_key', key); }
+  return key;
+}
+async function callAI(system, msg, maxTokens=1200) {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("Please enter your Gemini API key first. Get one free at aistudio.google.com/apikey");
+  localStorage.setItem('merasip_api_key', apiKey);
+  const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+encodeURIComponent(apiKey), {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      system_instruction:{parts:[{text:system}]},
+      contents:[{parts:[{text:msg}]}],
+      generationConfig:{maxOutputTokens:maxTokens,temperature:0.2}
+    })
+  });
+  const d = await r.json();
+  if(d.error) throw new Error(d.error.message||JSON.stringify(d.error));
+  return d.candidates?.[0]?.content?.parts?.[0]?.text||"";
+}
+
+function fixJSON(s) {
+  while(s.indexOf("```") !== -1){s=s.replace("```json","").replace("```","");}
+  s=s.trim();
+  const st=s.indexOf("{");
+  if(st===-1) throw new Error("No JSON object found");
+  s=s.slice(st);
+  let d=0,e=-1;
+  for(let i=0;i<s.length;i++){
+    if(s[i]==="{")d++;
+    else if(s[i]==="}"){d--;if(d===0){e=i;break;}}
+  }
+  if(e!==-1)s=s.slice(0,e+1);
+  // Remove trailing commas
+  let o="",j=0;
+  while(j<s.length){
+    if(s[j]===","){let k=j+1;while(k<s.length&&s[k]<=" ")k++;if(k<s.length&&(s[k]==="}"||s[k]==="]")){j++;continue;}}
+    o+=s[j];j++;
+  }
+  return JSON.parse(o);
+}
+
+// ═══════════════════════════════════════════════
+// SCREEN MANAGEMENT
+// ═══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  if(id==='data') renderFunds();
+  if(id==='analysis') renderAnalysis();
+  if(id==='report') renderReport();
+  window.scrollTo(0,0);
+}
+
+// ═══════════════════════════════════════════════
+// FUND MANAGEMENT
+// ═══════════════════════════════════════════════
+function recompute() {
+  const {ltcg} = getClient();
+  const {results} = analysePortfolio(funds, ltcg);
+  portResults = results;
+  renderTaxBar('taxbar-data');
+  document.getElementById('fund-count').textContent = funds.length;
+}
+
+function addFund() {
+  funds.push(newFund());
+  renderFunds();
+}
+
+function removeFund(i) {
+  funds.splice(i,1);
+  delete remarks[i];
+  const newRemarks={};
+  Object.keys(remarks).forEach(k=>{const ki=parseInt(k);if(ki>i)newRemarks[ki-1]=remarks[k];else if(ki<i)newRemarks[k]=remarks[k];});
+  remarks=newRemarks;
+  renderFunds();
+}
+
+function updateFund(i, key, val) {
+  funds[i][key] = val;
+  recompute();
+  // Re-render just this fund row's auto-rationale
+  const r = portResults[i];
+  const ratDiv = document.getElementById('fund-rationale-'+i);
+  if(ratDiv && r) {
+    ratDiv.innerHTML = buildRationaleHTML(i, r, funds[i]);
+  }
+  // Update the action badge
+  const badge = document.getElementById('fund-action-badge-'+i);
+  if(badge && r) { badge.textContent=r.action; badge.style.background=r.bg; badge.style.color=r.color; }
+}
+
+function buildRationaleHTML(i, r, f) {
+  if(!r || !r.rationale) return "";
+  const mc = MC[i%MC.length];
+  const trustLabel = r.inTrustner ? '<span style="color:var(--green)"> · ✅ TRUSTNER</span>' : "";
+  const switchLabel = r.switchTo ? '<span style="color:'+(r.mode==="switch-amc"?"var(--teal)":"var(--amber)")+'">&nbsp;·&nbsp;'+(r.mode==="switch-amc"?"🔄 SWITCH AMC":"🔀 REDEEM")+' → '+r.switchTo.name+'</span>' : "";
+  return '<div style="font-size:10px;font-weight:700;color:'+mc+';margin-bottom:4px">📊 SYSTEM ANALYSIS'+trustLabel+switchLabel+'</div>'+
+         '<div style="font-size:12px;color:var(--ink2);line-height:1.7;font-family:Georgia,serif">'+r.rationale+'</div>'+
+         '<div style="margin-top:6px"><button class="btn btn-outline btn-sm" onclick="runFundAI('+i+')">🤖 Full AI Advisory →</button></div>';
+}
+
+function renderFunds() {
+  const {ltcg} = getClient();
+  const {results} = analysePortfolio(funds, ltcg);
+  portResults = results;
+  const container = document.getElementById('funds-container');
+  container.innerHTML = '';
+  document.getElementById('fund-count').textContent = funds.length;
+  funds.forEach((f,i) => container.appendChild(buildFundRow(i,f,results[i])));
+  renderTaxBar('taxbar-data');
+}
+
+function buildFundRow(i, f, r) {
+  const mc = MC[i%MC.length];
+  const gain = f.current-f.invested;
+  const gainPct = f.invested>0?(gain/f.invested)*100:0;
+  const yrs = holdingYears(f.purchaseDate);
+  const altKey = CAT_TO_TRUSTNER[f.category];
+  const alts = altKey ? TRUSTNER[altKey]?.slice(0,2) : null;
+
+  const div = document.createElement('div');
+  div.className = 'fund-row';
+  div.id = 'fund-row-'+i;
+  div.style.borderLeft = '4px solid '+mc;
+
+  const catOpts = CAT_OPTIONS.map(c=>'<option value="'+c.v+'"'+(f.category===c.v?' selected':'')+'>'+c.l+'</option>').join('');
+  const perfOpts = [['good','Outperforming'],['avg','Average'],['bad','Underperforming']].map(([v,l])=>'<option value="'+v+'"'+(f.performance===v?' selected':'')+'>'+l+'</option>').join('');
+  const amcOpts = [['strong','Strong AMC'],['weak','Weak AMC']].map(([v,l])=>'<option value="'+v+'"'+(f.amcQuality===v?' selected':'')+'>'+l+'</option>').join('');
+
+  const holdingStr = yrs>=1 ? yrs.toFixed(1)+'y LTCG ✓' : (yrs>0?(yrs*12).toFixed(0)+'m STCG ⚠':'Date not set');
+  const holdingCol = yrs>=1?'var(--green)':'var(--amber)';
+  const altsHtml = alts ? alts.map(a=>
+    '<div style="border:1.5px solid '+mc+'30;border-radius:8px;padding:10px;background:var(--navyP);cursor:pointer" onclick="selectAlt('+i+',\''+a.name.replace(/'/g,"\\'")+'\')">'
+    +'<div style="position:relative"><span style="background:var(--navy);color:#fff;font-size:9px;font-weight:800;padding:1px 7px;border-radius:3px">'+a.badge+'</span></div>'
+    +'<div style="font-size:12px;font-weight:700;color:var(--navy);margin-top:6px;margin-bottom:4px">'+a.name+'</div>'
+    +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px">'
+    +(a.ret5y?'<span style="font-size:10px;background:var(--greenP);color:var(--green);padding:1px 6px;border-radius:4px;font-weight:700">5Y '+a.ret5y+'%</span>':'')
+    +(a.ret3y?'<span style="font-size:10px;background:var(--tealP);color:var(--teal);padding:1px 6px;border-radius:4px;font-weight:700">3Y '+a.ret3y+'%</span>':'')
+    +(a.ret1y?'<span style="font-size:10px;background:var(--greenP);color:var(--green);padding:1px 6px;border-radius:4px;font-weight:700">1Y '+a.ret1y+'%</span>':'')
+    +'<span style="font-size:10px;color:var(--ink3)">'+a.aum+'</span></div>'
+    +'<div style="font-size:11px;color:var(--ink2);line-height:1.5;font-family:Georgia,serif">'+a.why+'</div>'
+    +'<div style="font-size:10px;color:var(--navy);font-weight:700;margin-top:5px">↗ Select as switch target</div>'
+    +'</div>'
+  ).join('') : '';
+
+  div.innerHTML =
+    '<div class="fund-row-header" style="background:'+mc+'08">'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'
+        +'<div style="flex:3 1 200px"><div class="inp-wrap"><label class="inp-label">Fund Name</label><input type="text" value="'+escH(f.name)+'" placeholder="e.g. HDFC Mid Cap Opportunities Fund" oninput="updateFund('+i+',\'name\',this.value)"></div></div>'
+        +'<div style="flex:1 1 130px"><div class="inp-wrap"><label class="inp-label">Category</label><select onchange="updateFund('+i+',\'category\',this.value)">'+catOpts+'</select></div></div>'
+        +'<div style="flex:1 1 100px"><div class="inp-wrap"><label class="inp-label">Invested (₹)</label><input type="number" value="'+(f.invested||'')+'" placeholder="100000" oninput="updateFund('+i+',\'invested\',parseFloat(this.value)||0)"></div></div>'
+        +'<div style="flex:1 1 100px"><div class="inp-wrap"><label class="inp-label">Current (₹)</label><input type="number" value="'+(f.current||'')+'" placeholder="145000" oninput="updateFund('+i+',\'current\',parseFloat(this.value)||0)"></div></div>'
+        +'<div style="flex:1 1 120px"><div class="inp-wrap"><label class="inp-label">Purchase Date</label><input type="date" value="'+f.purchaseDate+'" onchange="updateFund('+i+',\'purchaseDate\',this.value)"></div></div>'
+        +'<div style="flex:1 1 100px"><div class="inp-wrap"><label class="inp-label">AMC Quality</label><select onchange="updateFund('+i+',\'amcQuality\',this.value)">'+amcOpts+'</select></div></div>'
+        +'<div style="flex:1 1 110px"><div class="inp-wrap"><label class="inp-label">Performance</label><select onchange="updateFund('+i+',\'performance\',this.value)">'+perfOpts+'</select></div></div>'
+        +'<div style="display:flex;align-items:center;gap:6px">'
+          +'<span id="fund-action-badge-'+i+'" style="background:'+r.bg+';color:'+r.color+';font-size:11px;font-weight:800;padding:5px 10px;border-radius:6px;white-space:nowrap">'+r.action+'</span>'
+          +'<button class="btn btn-danger btn-sm" onclick="removeFund('+i+')">✕</button>'
+        +'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;font-size:11px">'
+        +'<span style="color:var(--ink3)">Gain: <b style="color:'+gc(gain)+'">'+inr(gain,true)+' ('+pct(gainPct,true)+')</b></span>'
+        +'<span style="color:var(--ink3)">Holding: <b style="color:'+holdingCol+'">'+holdingStr+'</b></span>'
+        +(f.units>0?'<span style="color:var(--ink3)">Units: <b style="color:var(--navy)">'+f.units.toFixed(4)+'</b></span>':'')
+        +(f.nav>0?'<span style="color:var(--ink3)">NAV: <b style="color:var(--navy)">₹'+f.nav.toFixed(2)+'</b></span>':'')
+        +(gain>0&&r.action.includes("HARVEST")?'<span style="font-weight:700;color:var(--green)">💰 Tax-free: '+inr(Math.min(gain,Math.max(0,LTCG_LIMIT-getClient().ltcg)))+'</span>':"")
+        +(r.action.includes("LOSS")?'<span style="font-weight:700;color:var(--red)">📉 Loss offset: '+inr(Math.abs(gain))+'</span>':"")
+      +'</div>'
+      +(f.ltcgGain!==undefined?(function(){
+        const lg=f.ltcgGain||0, sg=f.stcgGain||0;
+        const slabPct=getClient().slab/100;
+        const ltcgTax=f.taxType==='debt50aa'?0:Math.round(Math.max(0,lg)*0.125);
+        const stcgTax=f.taxType==='equity'?Math.round(Math.max(0,sg)*0.20):Math.round(Math.max(0,sg)*slabPct);
+        if(f.taxType==='debt50aa')
+          return '<div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;font-size:10px;padding:4px 8px;background:var(--bg2);border-radius:5px">'
+            +'<span style="color:var(--ink3);font-weight:700">Sec 50AA</span>'
+            +'<span style="color:var(--amber);font-weight:700">All ₹'+Math.abs(sg).toLocaleString("en-IN")+' · Tax: ₹'+Math.round(Math.abs(sg)*slabPct).toLocaleString("en-IN")+' @'+getClient().slab+'% Slab — No LTCG benefit</span>'
+            +'</div>';
+        let html='<div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;font-size:10px;padding:4px 8px;background:var(--bg2);border-radius:5px">';
+        html+='<span style="color:var(--ink3);font-weight:700">'+escH(f.taxBucket||'')+'</span>';
+        if(lg!==0) html+='<span style="color:var(--green);font-weight:700">LTCG: ₹'+lg.toLocaleString("en-IN")+' · Gross Tax: ₹'+ltcgTax.toLocaleString("en-IN")+' @12.5%'+(f.taxType==='equity'?' <span style="color:var(--ink3);font-weight:400">(₹1.25L exemption at portfolio level)</span>':'')+'</span>';
+        if(sg!==0) html+='<span style="color:var(--amber);font-weight:700">STCG: ₹'+sg.toLocaleString("en-IN")+' · Tax: ₹'+stcgTax.toLocaleString("en-IN")+(f.taxType==='equity'?' @20%':' @'+getClient().slab+'% Slab')+'</span>';
+        if(lg===0&&sg===0) html+='<span style="color:var(--ink3)">No taxable gain</span>';
+        html+='</div>';
+        return html;
+      })():'')
+    +'</div>'
+    +'<div class="fund-row-actions">'
+      +'<button class="btn btn-primary btn-sm" id="fundai-btn-'+i+'" onclick="runFundAI('+i+')">🤖 AI Advisory</button>'
+      +(r.inTrustner?'<span class="badge" style="background:var(--greenP);color:var(--green);border:1px solid '+mc+'30">✅ Trustner Listed</span>':"")
+      +(!r.inTrustner&&r.switchTo?'<span class="badge" style="background:'+(r.mode==="switch-amc"?"var(--tealP)":"var(--amberP)")+';color:'+(r.mode==="switch-amc"?"var(--teal)":"var(--amber)")+'">'+
+        (r.mode==="switch-amc"?"🔄 Switch AMC":"🔀 Redeem")+': '+r.switchTo.name.split(" ").slice(0,3).join(" ")+'</span>':"")
+      +(alts?'<button class="btn btn-outline btn-sm" id="alts-btn-'+i+'" onclick="toggleAlts('+i+')">🏆 Trustner Alts</button>':"")
+    +'</div>'
+    +(alts?'<div id="alts-panel-'+i+'" style="display:none;padding:12px 14px;background:var(--navyP);border-top:1px solid var(--navy)30">'
+      +'<div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:8px">🏆 TRUSTNER ALTERNATIVES — MARCH 2026</div>'
+      +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px">'+altsHtml+'</div></div>':"")
+    +'<div id="fund-rationale-'+i+'" style="padding:10px 14px;border-top:1px solid '+mc+'20;background:'+mc+'04">'
+      +buildRationaleHTML(i,r,f)
+    +'</div>'
+    +'<div id="fund-remark-'+i+'" style="display:none;padding:10px 14px;border-top:1px solid '+mc+'20;background:'+mc+'06">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+        +'<span style="font-size:10px;font-weight:700;color:'+mc+'">📝 ADVISOR REMARKS</span>'
+        +'<button class="btn btn-outline btn-sm" onclick="editRemark('+i+')" id="remark-edit-btn-'+i+'">✏️ Edit</button>'
+      +'</div>'
+      +'<div id="remark-text-'+i+'" style="font-size:12px;color:var(--ink);line-height:1.75;white-space:pre-wrap;font-family:Georgia,serif"></div>'
+      +'<textarea id="remark-ta-'+i+'" style="display:none;width:100%;box-sizing:border-box;border:1px solid '+mc+'40;border-radius:6px;padding:8px 10px;font-size:12px;font-family:Georgia,serif;line-height:1.75;min-height:80px"></textarea>'
+      +'<div id="remark-edit-btns-'+i+'" style="display:none;margin-top:6px;gap:6px;display:none">'
+        +'<button class="btn btn-success btn-sm" onclick="saveRemark('+i+')">✅ Save</button>'
+        +'<button class="btn btn-ghost btn-sm" onclick="cancelRemark('+i+')">Cancel</button>'
+      +'</div>'
+    +'</div>';
+
+  if(remarks[i]) showRemark(i, remarks[i]);
+  return div;
+}
+
+function escH(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+function toggleAlts(i) {
+  const p = document.getElementById('alts-panel-'+i);
+  const b = document.getElementById('alts-btn-'+i);
+  if(p.style.display==='none'){p.style.display='block';b.textContent='🏆 Hide Alts';}
+  else{p.style.display='none';b.textContent='🏆 Trustner Alts';}
+}
+
+function selectAlt(i, name) {
+  funds[i].switchTarget = name;
+  renderFunds();
+}
+
+function showRemark(i, text) {
+  remarks[i] = text;
+  const div = document.getElementById('fund-remark-'+i);
+  if(!div) return;
+  div.style.display = 'block';
+  const mc = MC[i%MC.length];
+  div.style.borderTopColor = mc+'20';
+  div.style.background = mc+'06';
+  document.getElementById('remark-text-'+i).textContent = text;
+  const ta = document.getElementById('remark-ta-'+i);
+  if(ta) ta.value = text;
+}
+
+function editRemark(i) {
+  document.getElementById('remark-text-'+i).style.display='none';
+  document.getElementById('remark-ta-'+i).style.display='block';
+  document.getElementById('remark-edit-btn-'+i).style.display='none';
+  const btns = document.getElementById('remark-edit-btns-'+i);
+  btns.style.display='flex';
+}
+
+function saveRemark(i) {
+  const ta = document.getElementById('remark-ta-'+i);
+  showRemark(i, ta.value);
+  document.getElementById('remark-text-'+i).style.display='block';
+  document.getElementById('remark-ta-'+i).style.display='none';
+  document.getElementById('remark-edit-btn-'+i).style.display='';
+  document.getElementById('remark-edit-btns-'+i).style.display='none';
+}
+
+function cancelRemark(i) {
+  const ta = document.getElementById('remark-ta-'+i);
+  ta.value = remarks[i]||'';
+  document.getElementById('remark-text-'+i).style.display='block';
+  ta.style.display='none';
+  document.getElementById('remark-edit-btn-'+i).style.display='';
+  document.getElementById('remark-edit-btns-'+i).style.display='none';
+}
+
+// ═══════════════════════════════════════════════
+// TAX BAR
+// ═══════════════════════════════════════════════
+function renderTaxBar(containerId) {
+  const {ltcg:ltcgUsed} = getClient();
+  const {results} = analysePortfolio(funds, ltcgUsed);
+  let totalGain=0,lossOffset=0,planHarvest=0,trustnerN=0,switchN=0,redeemN=0;
+  funds.forEach((f,i)=>{
+    const g=f.current-f.invested,y=holdingYears(f.purchaseDate);
+    const r=results[i]||{};
+    if(f.category!=="debt"&&y>=1){if(g>0)totalGain+=g;else lossOffset+=Math.abs(g);}
+    if(r.harvestAmt>0)planHarvest+=r.harvestAmt;
+    if(r.inTrustner&&r.harvestAmt>0)trustnerN++;
+    else if(r.mode==="switch-amc"&&r.harvestAmt>0)switchN++;
+    else if(r.mode==="redeem"&&r.harvestAmt>0)redeemN++;
+  });
+  const room=Math.max(0,LTCG_LIMIT-ltcgUsed);
+  const taxSaved=Math.round(planHarvest*0.125);
+  const usedPct=Math.min(100,((ltcgUsed+planHarvest)/LTCG_LIMIT)*100);
+  const curPct=Math.min(100,(ltcgUsed/LTCG_LIMIT)*100);
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  el.innerHTML=
+    '<div style="background:var(--navy);border-radius:10px;padding:14px 18px;margin-bottom:14px;color:#fff">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">'
+        +'<div style="font-size:13px;font-weight:800">LTCG Tax Harvest Plan — FY 2025-26</div>'
+        +'<div style="font-size:11px;color:rgba(255,255,255,.6)">₹1,25,000 annual exemption</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'
+        +['Tax-Free Room:'+inr(room),'Plan to Harvest:'+inr(planHarvest),'Est. Tax Saved:₹'+taxSaved.toLocaleString("en-IN"),'Total LTCG Available:'+inr(totalGain)].map(s=>{
+          const [l,v]=s.split(':');
+          return '<div style="background:rgba(255,255,255,.1);border-radius:7px;padding:7px 12px;flex:1 0 80px"><div style="font-size:14px;font-weight:800;color:#86EFAC">'+v+'</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:1px">'+l.toUpperCase()+'</div></div>';
+        }).join('')
+      +'</div>'
+      +'<div class="progress-bar"><div class="progress-fill" style="width:'+curPct+'%;background:#86EFAC;opacity:.5"></div></div>'
+      +'<div class="progress-bar" style="margin-top:-6px"><div class="progress-fill" style="width:'+usedPct+'%;background:#86EFAC"></div></div>'
+      +((trustnerN+switchN+redeemN)>0?'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'
+        +(trustnerN>0?'<span style="font-size:10px;background:rgba(134,239,172,.15);color:#86EFAC;padding:2px 8px;border-radius:10px;font-weight:700">✅ '+trustnerN+' Hold & Reinvest Same</span>':"")
+        +(switchN>0?'<span style="font-size:10px;background:rgba(94,234,212,.15);color:#5EEAD4;padding:2px 8px;border-radius:10px;font-weight:700">🔄 '+switchN+' Switch AMC</span>':"")
+        +(redeemN>0?'<span style="font-size:10px;background:rgba(252,211,77,.15);color:#FCD34D;padding:2px 8px;border-radius:10px;font-weight:700">🔀 '+redeemN+' Redeem & Reinvest</span>':"")
+        +'</div>':"")
+    +'</div>';
+}
+
+// ═══════════════════════════════════════════════
+// AI ACTIONS
+// ═══════════════════════════════════════════════
+const SYS_ADVISOR = "You are MeraSIP's CA-CFA-CFP advisor for Trustner Asset Services (ARN-286886). Rules: 1) Trustner-listed = good fund, harvest & reinvest SAME. 2) Not Trustner, same AMC = switch within AMC. 3) Not Trustner = redeem & reinvest in named Trustner fund. 4) ELSS <3yr or debt = hold. 5) STCG <1yr = wait. Be specific with rupee amounts. 3-4 sentences. Clear action at end.";
+const SYS_EXTRACTOR = 'Extract mutual fund portfolio data and return ONLY valid JSON (no markdown, no trailing commas). Format: {"clientName":"","pan":"","age":null,"funds":[{"name":"","category":"flexi","invested":0,"current":0,"purchaseDate":"YYYY-MM-DD","performance":"good","amcQuality":"strong"}]} Categories: large,large-mid,mid,small,flexi,multi,hybrid,baf,multi-asset,elss,index,debt. Estimate purchaseDate from holding period. If unknown use 2 years ago.';
+
+async function runFundAI(i) {
+  const f = funds[i], r = portResults[i]||{};
+  const {name,age,regime,risk,ltcg} = getClient();
+  const gain = f.current-f.invested, yrs = holdingYears(f.purchaseDate);
+  const btn = document.getElementById('fundai-btn-'+i);
+  btn.disabled=true; btn.textContent="⏳ Analysing...";
+  const remarkDiv = document.getElementById('fund-remark-'+i);
+  remarkDiv.style.display='block';
+  document.getElementById('remark-text-'+i).textContent="Generating advisory...";
+  document.getElementById('remark-ta-'+i).value="";
+
+  let text;
+  try {
+    text = await callAI(SYS_ADVISOR,
+      "Fund: "+f.name+" | "+getCatLabel(f.category)+" | Invested:"+inr(f.invested)+" Current:"+inr(f.current)+" Gain:"+inr(gain,true)+" | "+yrs.toFixed(1)+"yrs\n"+
+      "Client: "+(name||"client")+", Age:"+age+", "+regime+", "+risk+", LTCG used:"+inr(ltcg)+"\n"+
+      "Action: "+(r.action||"HOLD")+" | "+(r.inTrustner?"✅ IN TRUSTNER LIST":r.switchTo?"Switch to "+r.switchTo.name:"Not in Trustner")+"\n"+
+      "Tax saving: ₹"+Math.round((r.harvestAmt||0)*0.125).toLocaleString("en-IN")+" on ₹"+(r.harvestAmt||0).toLocaleString("en-IN")+" harvested");
+  } catch(e) { text = "Error: "+e.message; }
+
+  showRemark(i, text);
+  btn.disabled=false; btn.innerHTML="🤖 AI Advisory";
+}
+
+async function runGroupAI() {
+  const cl = getClient();
+  const {results} = analysePortfolio(funds, cl.ltcg);
+  portResults = results;
+  const btn = document.getElementById('group-ai-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Generating...';
+  document.getElementById('group-ai-status').classList.remove('hidden');
+  document.getElementById('group-ai-status').innerHTML='<span class="spinner" style="color:var(--navy)"></span>Applying CA/CFA/CFP expertise + Trustner March 2026 fund shortlist...';
+  document.getElementById('group-ai-placeholder').style.display='none';
+  document.getElementById('group-ai-result').style.display='none';
+
+  const lines = funds.map((f,i)=>{
+    const r=results[i]||{},g=f.current-f.invested;
+    return (i+1)+". "+f.name+" ["+getCatLabel(f.category)+"] "+(r.inTrustner?"✅ Trustner":"❌ Not Trustner")+" | Action:"+r.action+(r.switchTo?" → "+(r.mode==="switch-amc"?"Switch AMC":"Redeem→")+" "+r.switchTo.name:"")+" | Inv:"+inr(f.invested)+" Cur:"+inr(f.current)+" Gain:"+inr(g,true)+" | "+holdingYears(f.purchaseDate).toFixed(1)+"yr | Harvest:"+inr(r.harvestAmt||0)+" TaxSave:₹"+Math.round((r.harvestAmt||0)*0.125).toLocaleString("en-IN");
+  }).join("\n");
+
+  const totalInvested=funds.reduce((s,f)=>s+f.invested,0);
+  const totalCurrent=funds.reduce((s,f)=>s+f.current,0);
+  const totalHarvest=results.reduce((s,r)=>s+(r?.harvestAmt||0),0);
+
+  let text;
+  try {
+    text = await callAI(SYS_ADVISOR,
+      "Portfolio Advisory for "+(cl.name||"client")+" | "+cl.regime+" | "+cl.risk+" | LTCG used:"+inr(cl.ltcg)+" room:"+inr(Math.max(0,LTCG_LIMIT-cl.ltcg))+"\n"+
+      "Total: Invested:"+inr(totalInvested)+" Current:"+inr(totalCurrent)+" Gain:"+inr(totalCurrent-totalInvested,true)+"\n"+
+      "Total harvestable: "+inr(totalHarvest)+" | Est. tax saved: ₹"+Math.round(totalHarvest*0.125).toLocaleString("en-IN")+"\n\n"+
+      lines+"\n\nWrite 5-6 para advisory. Specific rupees. Follow actions above. End with 3 steps before March 31st.",
+      2000
+    );
+  } catch(e) { text = "Error: "+e.message; }
+
+  groupRemark = text;
+  document.getElementById('group-ai-status').classList.add('hidden');
+  document.getElementById('group-ai-result').style.display='block';
+  document.getElementById('group-ai-result').textContent=text;
+  btn.disabled=false; btn.textContent="Regenerate";
+}
+
+function getCatLabel(v){return (CAT_OPTIONS.find(c=>c.v===v)||{l:v}).l;}
+
+// ═══════════════════════════════════════════════
+// RENDER ANALYSIS SCREEN
+// ═══════════════════════════════════════════════
+function renderAnalysis() {
+  const cl = getClient();
+  const {results} = analysePortfolio(funds, cl.ltcg);
+  portResults = results;
+  const totalInvested=funds.reduce((s,f)=>s+f.invested,0);
+  const totalCurrent=funds.reduce((s,f)=>s+f.current,0);
+  const totalGain=totalCurrent-totalInvested;
+  document.getElementById('analysis-title').textContent = "Analysis — "+(cl.name||"Portfolio");
+  const summaryEl = document.getElementById('analysis-summary');
+  const totalLTCG = funds.reduce((s,f)=>s+(f.ltcgGain||0),0);
+  const totalSTCG = funds.reduce((s,f)=>s+(f.stcgGain||0),0);
+  summaryEl.innerHTML = [
+    [inr(totalCurrent),"AUM","#86EFAC"],
+    [inr(totalInvested),"Invested","#fff"],
+    [inr(totalGain,true),"Total Gain",totalGain>=0?"#86EFAC":"#FCA5A5"],
+    [inr(totalLTCG,true),"Equity LTCG","#86EFAC"],
+    [inr(totalSTCG,true),"STCG","#FCD34D"],
+    ['₹'+exemptionUsed.toLocaleString("en-IN"),"Exemption Used","#86EFAC"],
+    ['₹'+taxableEquityLTCG.toLocaleString("en-IN"),"Taxable LTCG","#FCD34D"],
+    ['₹'+(sumLTCGTax+sumSTCGTax).toLocaleString("en-IN"),"Total Tax","#FCA5A5"],
+    [inr(remainingExemption),"LTCG Room Left","#86EFAC"],
+  ].map(([v,l,c])=>'<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:8px 14px;flex:1 0 80px"><div style="font-size:15px;font-weight:800;color:'+c+'">'+v+'</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px">'+l.toUpperCase()+'</div></div>').join('');
+
+  // LTCG/STCG tax totals with ₹1.25L equity LTCG exemption
+  const slabPct=cl.slab/100;
+  const ltcgExemption = LTCG_LIMIT; // ₹1,25,000
+  const alreadyRealisedLTCG = cl.ltcg || 0;
+  const remainingExemption = Math.max(0, ltcgExemption - alreadyRealisedLTCG);
+
+  // Calculate total equity LTCG (only equity-oriented funds get the exemption)
+  let totalEquityLTCG = 0, totalOtherLTCG = 0;
+  let sumSTCGTax = 0;
+  funds.forEach(f=>{
+    const lg=Math.max(0, f.ltcgGain||0), sg=f.stcgGain||0;
+    if(f.taxType==='equity') totalEquityLTCG += lg;
+    else if(f.taxType!=='debt50aa') totalOtherLTCG += lg;
+    // STCG tax (no exemption for STCG)
+    if(f.taxType==='equity') sumSTCGTax+=Math.round(Math.max(0,sg)*0.20);
+    else sumSTCGTax+=Math.round(Math.max(0,sg)*slabPct);
+  });
+
+  // Apply ₹1.25L exemption to equity LTCG
+  const taxableEquityLTCG = Math.max(0, totalEquityLTCG - remainingExemption);
+  const equityLTCGTax = Math.round(taxableEquityLTCG * 0.125);
+  const otherLTCGTax = Math.round(totalOtherLTCG * 0.125);
+  const sumLTCGTax = equityLTCGTax + otherLTCGTax;
+  const exemptionUsed = Math.min(totalEquityLTCG, remainingExemption);
+
+  // Portfolio Summary Table
+  const summaryTableEl = document.getElementById('analysis-table');
+  if(summaryTableEl) summaryTableEl.remove();
+  const tblDiv = document.createElement('div');
+  tblDiv.id='analysis-table';
+  tblDiv.style.cssText='margin:12px 0;overflow-x:auto';
+  tblDiv.innerHTML=
+    '<table style="width:100%;border-collapse:collapse;font-size:11px;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)">'
+    +'<thead><tr style="background:var(--navy);color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.5px">'
+    +'<th style="padding:8px 10px;text-align:left">Fund</th>'
+    +'<th style="padding:8px 6px;text-align:left">Category</th>'
+    +'<th style="padding:8px 6px;text-align:right">Invested</th>'
+    +'<th style="padding:8px 6px;text-align:right">Current</th>'
+    +'<th style="padding:8px 6px;text-align:right">Gain</th>'
+    +'<th style="padding:8px 6px;text-align:right">LTCG</th>'
+    +'<th style="padding:8px 6px;text-align:right">LTCG Tax</th>'
+    +'<th style="padding:8px 6px;text-align:right">STCG</th>'
+    +'<th style="padding:8px 6px;text-align:right">STCG Tax</th>'
+    +'<th style="padding:8px 6px;text-align:left">Tax Type</th>'
+    +'<th style="padding:8px 6px;text-align:center">Action</th>'
+    +'</tr></thead>'
+    +'<tbody>'+funds.map((f,i)=>{
+      const r=results[i]||{action:"HOLD",color:"#1B3A6B",bg:"#E8EEF8"};
+      const gain=f.current-f.invested;
+      const lg=f.ltcgGain||0, sg=f.stcgGain||0;
+      const ltcgTax=f.taxType==='debt50aa'?0:Math.round(Math.max(0,lg)*0.125);
+      const stcgTax=f.taxType==='equity'?Math.round(Math.max(0,sg)*0.20):Math.round(Math.max(0,sg)*slabPct);
+      return '<tr style="border-bottom:1px solid #f0f0f0;background:'+(i%2?'#fafbfc':'#fff')+'">'
+        +'<td style="padding:7px 10px;font-weight:700;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+escH(f.name)+'">'+escH((f.name||'').split(' ').slice(0,4).join(' '))+'</td>'
+        +'<td style="padding:7px 6px;color:var(--ink3)">'+getCatLabel(f.category)+'</td>'
+        +'<td style="padding:7px 6px;text-align:right">'+inr(f.invested)+'</td>'
+        +'<td style="padding:7px 6px;text-align:right;font-weight:700">'+inr(f.current)+'</td>'
+        +'<td style="padding:7px 6px;text-align:right;font-weight:700;color:'+gc(gain)+'">'+inr(gain,true)+'</td>'
+        +'<td style="padding:7px 6px;text-align:right;color:var(--green);font-weight:600">'+(lg===0?'—':'₹'+lg.toLocaleString("en-IN"))+'</td>'
+        +'<td style="padding:7px 6px;text-align:right;color:var(--ink3);font-size:10px">'+(lg===0?'—':'₹'+ltcgTax.toLocaleString("en-IN")+' <span style="font-size:9px">@12.5%</span>')+'</td>'
+        +'<td style="padding:7px 6px;text-align:right;color:var(--amber);font-weight:600">'+(sg===0?'—':'₹'+sg.toLocaleString("en-IN"))+'</td>'
+        +'<td style="padding:7px 6px;text-align:right;color:var(--ink3);font-size:10px">'+(sg===0?'—':'₹'+stcgTax.toLocaleString("en-IN")+' <span style="font-size:9px">'+(f.taxType==='equity'?'@20%':'@'+cl.slab+'%')+'</span>')+'</td>'
+        +'<td style="padding:7px 6px;font-size:10px;color:var(--ink3)">'+escH(f.taxBucket||'')+'</td>'
+        +'<td style="padding:7px 6px;text-align:center"><span style="background:'+r.bg+';color:'+r.color+';font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;white-space:nowrap">'+r.action+'</span></td>'
+        +'</tr>';
+    }).join('')
+    +'<tr style="background:var(--navy);color:#fff;font-weight:800;font-size:11px">'
+    +'<td style="padding:8px 10px" colspan="2">TOTAL</td>'
+    +'<td style="padding:8px 6px;text-align:right">'+inr(totalInvested)+'</td>'
+    +'<td style="padding:8px 6px;text-align:right">'+inr(totalCurrent)+'</td>'
+    +'<td style="padding:8px 6px;text-align:right;color:'+(totalGain>=0?'#86EFAC':'#FCA5A5')+'">'+inr(totalGain,true)+'</td>'
+    +'<td style="padding:8px 6px;text-align:right;color:#86EFAC">₹'+totalLTCG.toLocaleString("en-IN")+'</td>'
+    +'<td style="padding:8px 6px;text-align:right;color:#86EFAC">₹'+sumLTCGTax.toLocaleString("en-IN")+'</td>'
+    +'<td style="padding:8px 6px;text-align:right;color:#FCD34D">₹'+totalSTCG.toLocaleString("en-IN")+'</td>'
+    +'<td style="padding:8px 6px;text-align:right;color:#FCD34D">₹'+sumSTCGTax.toLocaleString("en-IN")+'</td>'
+    +'<td style="padding:8px 6px" colspan="2">Total Tax: ₹'+(sumLTCGTax+sumSTCGTax).toLocaleString("en-IN")+'</td>'
+    +'</tr>'
+    +'<tr style="background:#1a3a5c;color:#86EFAC;font-size:10px">'
+    +'<td style="padding:6px 10px" colspan="5"><b>₹1.25L Equity LTCG Exemption</b>'+(alreadyRealisedLTCG>0?' (Already realised: ₹'+alreadyRealisedLTCG.toLocaleString("en-IN")+')':'')+'</td>'
+    +'<td style="padding:6px 6px;text-align:right"><b>Exempt: ₹'+exemptionUsed.toLocaleString("en-IN")+'</b></td>'
+    +'<td style="padding:6px 6px;text-align:right"><b>Taxable: ₹'+taxableEquityLTCG.toLocaleString("en-IN")+'</b></td>'
+    +'<td style="padding:6px 6px;text-align:right" colspan="2"><b>Tax Saved: ₹'+Math.round(exemptionUsed*0.125).toLocaleString("en-IN")+'</b></td>'
+    +'<td style="padding:6px 6px;text-align:right"><b>Net Tax: ₹'+(sumLTCGTax+sumSTCGTax).toLocaleString("en-IN")+'</b></td>'
+    +'</tr>'
+    +'</tbody></table>';
+  summaryEl.parentNode.insertBefore(tblDiv, summaryEl.nextSibling);
+
+  if(groupRemark){
+    document.getElementById('group-ai-result').style.display='block';
+    document.getElementById('group-ai-result').textContent=groupRemark;
+    document.getElementById('group-ai-placeholder').style.display='none';
+    document.getElementById('group-ai-btn').textContent='Regenerate';
+  }
+
+  const aFunds = document.getElementById('analysis-funds');
+  aFunds.innerHTML='';
+  funds.forEach((f,i)=>{
+    const r=results[i]||{action:"HOLD",color:"#1B3A6B",bg:"#E8EEF8",rationale:"",switchTo:null,inTrustner:false,mode:"hold"};
+    const mc=MC[i%MC.length];
+    const gain=f.current-f.invested,yrs=holdingYears(f.purchaseDate);
+    const div=document.createElement('div');
+    div.style.cssText='background:#fff;border:2px solid '+mc+';border-radius:10px;padding:14px;margin-bottom:10px';
+    div.innerHTML=
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px">'
+        +'<div><div style="font-size:13px;font-weight:800;color:'+mc+'">'+(f.name||"Fund "+(i+1))+'</div>'
+        +'<div style="font-size:11px;color:var(--ink3)">'+getCatLabel(f.category)+' · '+f.amcQuality+' AMC</div>'
+        +'<div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;font-size:11px">'
+          +'<span>Invested: <b style="color:'+mc+'">'+inr(f.invested)+'</b></span>'
+          +'<span>Value: <b style="color:'+mc+'">'+inr(f.current)+'</b></span>'
+          +'<span style="color:'+gc(gain)+'">Gain: <b>'+inr(gain,true)+'</b></span>'
+          +'<span style="color:'+(yrs>=1?'var(--green)':'var(--amber)')+'">'+( yrs>=1?yrs.toFixed(1)+'y LTCG ✓':(yrs*12).toFixed(0)+'m STCG')+'</span>'
+        +'</div>'
+        +(f.ltcgGain!==undefined?(function(){
+          const lg=f.ltcgGain||0, sg=f.stcgGain||0;
+          const slabPct=getClient().slab/100;
+          const ltcgTax=f.taxType==='debt50aa'?0:Math.round(Math.max(0,lg)*0.125);
+          const stcgTax=f.taxType==='equity'?Math.round(Math.max(0,sg)*0.20):Math.round(Math.max(0,sg)*slabPct);
+          if(f.taxType==='debt50aa')
+            return '<div style="display:flex;gap:8px;margin-top:3px;font-size:10px"><span style="background:var(--bg2);padding:2px 6px;border-radius:4px;color:var(--ink3);font-weight:600">Sec 50AA</span><span style="color:var(--amber);font-weight:700">All ₹'+Math.abs(sg).toLocaleString("en-IN")+' · Tax ₹'+Math.round(Math.abs(sg)*slabPct).toLocaleString("en-IN")+' @'+getClient().slab+'% Slab</span></div>';
+          let h='<div style="display:flex;gap:8px;margin-top:3px;font-size:10px"><span style="background:var(--bg2);padding:2px 6px;border-radius:4px;color:var(--ink3);font-weight:600">'+escH(f.taxBucket||'')+'</span>';
+          if(lg!==0) h+='<span style="color:var(--green);font-weight:700">LTCG: ₹'+lg.toLocaleString("en-IN")+' · Tax ₹'+ltcgTax.toLocaleString("en-IN")+' @12.5%</span>';
+          if(sg!==0) h+='<span style="color:var(--amber);font-weight:700">STCG: ₹'+sg.toLocaleString("en-IN")+' · Tax ₹'+stcgTax.toLocaleString("en-IN")+(f.taxType==='equity'?' @20%':' @'+getClient().slab+'% Slab')+'</span>';
+          if(lg===0&&sg===0) h+='<span style="color:var(--ink3)">No taxable gain</span>';
+          return h+'</div>';
+        })():'')
+        +'</div>'
+        +'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
+          +'<span style="background:'+r.bg+';color:'+r.color+';font-size:11px;font-weight:800;padding:4px 10px;border-radius:6px">'+r.action+'</span>'
+          +'<button class="btn btn-primary btn-sm" id="analysis-ai-btn-'+i+'" onclick="runAnalysisFundAI('+i+')">Ask AI</button>'
+        +'</div>'
+      +'</div>'
+      +(r.rationale?'<div style="font-size:12px;color:var(--ink2);line-height:1.7;font-family:Georgia,serif;border-left:3px solid '+mc+';padding-left:10px;margin-bottom:'+(remarks[i]?'8px':'0')+'">'+r.rationale+'</div>':"")
+      +'<div id="analysis-remark-'+i+'">'
+        +(remarks[i]?'<div style="border-top:1px solid '+mc+'20;padding-top:8px;margin-top:4px"><div style="font-size:12px;color:var(--ink);line-height:1.75;white-space:pre-wrap;font-family:Georgia,serif;border-left:3px solid '+mc+';padding-left:10px">'+remarks[i]+'</div></div>':"")
+      +'</div>';
+    aFunds.appendChild(div);
+  });
+}
+
+async function runAnalysisFundAI(i) {
+  const f=funds[i],r=portResults[i]||{};
+  const cl=getClient(),gain=f.current-f.invested,yrs=holdingYears(f.purchaseDate);
+  const btn=document.getElementById('analysis-ai-btn-'+i);
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  const remarkEl=document.getElementById('analysis-remark-'+i);
+  remarkEl.innerHTML='<div style="font-size:12px;color:var(--ink3);padding:8px 0"><span class="spinner"></span>Analysing '+escH(f.name||"fund")+'...</div>';
+
+  let text;
+  try {
+    text=await callAI(SYS_ADVISOR,
+      "Fund: "+f.name+" | "+getCatLabel(f.category)+" | Invested:"+inr(f.invested)+" Current:"+inr(f.current)+" Gain:"+inr(gain,true)+" | "+yrs.toFixed(1)+"yrs\n"+
+      "Client: "+(cl.name||"client")+", "+cl.regime+", "+cl.risk+", LTCG used:"+inr(cl.ltcg)+"\n"+
+      "Action: "+(r.action||"HOLD")+" | "+(r.inTrustner?"✅ IN TRUSTNER LIST":r.switchTo?"Switch to "+r.switchTo.name:"Not in Trustner")+"\n"+
+      "Tax saving: ₹"+Math.round((r.harvestAmt||0)*0.125).toLocaleString("en-IN"));
+  } catch(e) { text = "Error: "+e.message; }
+
+  const mc=MC[i%MC.length];
+  remarks[i]=text;
+  remarkEl.innerHTML='<div style="border-top:1px solid '+mc+'20;padding-top:8px;margin-top:4px"><div style="font-size:12px;color:var(--ink);line-height:1.75;white-space:pre-wrap;font-family:Georgia,serif;border-left:3px solid '+mc+';padding-left:10px">'+text+'</div></div>';
+  btn.disabled=false;btn.textContent="Ask AI";
+}
+
+// ═══════════════════════════════════════════════
+// RENDER REPORT
+// ═══════════════════════════════════════════════
+function renderReport() {
+  const cl = getClient();
+  const {results} = analysePortfolio(funds, cl.ltcg);
+  portResults = results;
+  const totalInv=funds.reduce((s,f)=>s+f.invested,0);
+  const totalCur=funds.reduce((s,f)=>s+f.current,0);
+  const totalGain=totalCur-totalInv;
+  const ltcgRoom=Math.max(0,LTCG_LIMIT-cl.ltcg);
+  let ltcgGain=0;
+  funds.forEach(f=>{const g=f.current-f.invested,y=holdingYears(f.purchaseDate);if(f.category!=="debt"&&y>=1&&g>0)ltcgGain+=g;});
+  const taxSaved=Math.min(ltcgGain,ltcgRoom)*0.125;
+  const today=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"long",year:"numeric"});
+
+  document.getElementById('report-cover').innerHTML=
+    '<div style="font-size:10px;color:rgba(255,255,255,.35);margin-bottom:6px;font-family:monospace">MERASIP · TRUSTNER ASSET SERVICES · ARN-286886 · EUIN: E092119</div>'
+    +'<div style="font-size:26px;font-weight:900;margin-bottom:4px">S.M.A.R.T Portfolio Review</div>'
+    +'<div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:18px">'+(cl.name||"Client")+(cl.pan?" · "+cl.pan:"")+" · "+cl.regime+" · "+cl.risk+" · "+today+'</div>'
+    +'<div style="display:flex;gap:10px;flex-wrap:wrap">'
+    +[[inr(totalCur),"Total AUM"],[inr(totalInv),"Invested"],[inr(totalGain,true),"Gain",totalGain>=0],["₹"+Math.round(taxSaved).toLocaleString("en-IN"),"Est. Tax Saved",taxSaved>0],[inr(ltcgRoom),"LTCG Room",ltcgRoom>10000]].map(([v,l,hi])=>
+      '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:8px 12px"><div style="font-size:15px;font-weight:800;color:'+(hi===true?"#86EFAC":hi===false?"#FCA5A5":"#fff")+'">'+v+'</div><div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px">'+l.toUpperCase()+'</div></div>'
+    ).join('')+'</div>';
+
+  // ═══ CLIENT PROFILE SECTION ═══
+  const profEl = document.getElementById('report-client-profile');
+  if(profEl) {
+    profEl.innerHTML='<div style="border:2px solid #e2e8f0;border-radius:10px;overflow:hidden">'
+      +'<div style="background:#f8fafc;padding:10px 16px;border-bottom:1px solid #e2e8f0"><span style="font-size:12px;font-weight:900;color:var(--navy)">👤 Client Profile</span></div>'
+      +'<div style="padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;font-size:11px">'
+      +[['Name',cl.name||'—'],['PAN',cl.pan||'—'],['Age',cl.age||'—'],['Tax Regime',cl.regime],['Risk Profile',cl.risk],['Horizon',cl.horizon||'5+ Years'],['Goal',cl.goal||'Wealth Creation'],['LTCG Realised','₹'+(cl.ltcg||0).toLocaleString('en-IN')],['Tax Slab',(cl.slab||30)+'%']].map(([l,v])=>
+        '<div style="background:#fff;border:1px solid #f0f0f0;border-radius:6px;padding:6px 10px"><div style="font-size:9px;color:#94a3b8;font-weight:700;text-transform:uppercase;margin-bottom:2px">'+l+'</div><div style="font-weight:800;color:var(--navy)">'+escH(String(v))+'</div></div>'
+      ).join('')
+      +'</div></div>';
+  }
+
+  // ═══ TAX SUMMARY TABLE ═══
+  const taxEl = document.getElementById('report-tax-summary');
+  if(taxEl) {
+    const slabP=(cl.slab||30)/100;
+    let eqLTCG=0,eqSTCG=0,othLTCG=0,othSTCG=0;
+    funds.forEach(f=>{
+      const lg=Math.max(0,f.ltcgGain||0),sg=Math.max(0,f.stcgGain||0);
+      if(f.taxType==='equity'){eqLTCG+=lg;eqSTCG+=sg;}
+      else if(f.taxType!=='debt50aa'){othLTCG+=lg;othSTCG+=sg;}
+      else{othSTCG+=Math.abs(f.stcgGain||0);}
+    });
+    const exemptUsed=Math.min(eqLTCG,Math.max(0,LTCG_LIMIT-(cl.ltcg||0)));
+    const taxableEqLTCG=Math.max(0,eqLTCG-exemptUsed);
+    const eqLTCGTax=Math.round(taxableEqLTCG*0.125);
+    const eqSTCGTax=Math.round(eqSTCG*0.20);
+    const othLTCGTax=Math.round(othLTCG*0.125);
+    const othSTCGTax=Math.round(othSTCG*slabP);
+    const totalTax=eqLTCGTax+eqSTCGTax+othLTCGTax+othSTCGTax;
+    const saved=Math.round(exemptUsed*0.125);
+
+    taxEl.innerHTML='<div style="border:2px solid #e2e8f0;border-radius:10px;overflow:hidden">'
+      +'<div style="background:#f8fafc;padding:10px 16px;border-bottom:1px solid #e2e8f0"><span style="font-size:12px;font-weight:900;color:var(--navy)">📊 Tax Summary — FY 2025-26</span></div>'
+      +'<div style="padding:12px 16px">'
+      +'<table style="width:100%;border-collapse:collapse;font-size:11px">'
+      +'<thead><tr style="background:var(--navy);color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:.5px">'
+      +'<th style="padding:8px 10px;text-align:left">Type</th><th style="padding:8px;text-align:right">Gain</th><th style="padding:8px;text-align:right">Exemption</th><th style="padding:8px;text-align:right">Taxable</th><th style="padding:8px;text-align:right">Rate</th><th style="padding:8px;text-align:right">Tax</th>'
+      +'</tr></thead><tbody>'
+      +'<tr style="background:#f0fdf4;border-bottom:1px solid #e2e8f0"><td style="padding:8px 10px;font-weight:700;color:#065f46">Equity LTCG</td><td style="padding:8px;text-align:right;font-weight:700">₹'+eqLTCG.toLocaleString('en-IN')+'</td><td style="padding:8px;text-align:right;color:#16a34a;font-weight:700">-₹'+exemptUsed.toLocaleString('en-IN')+'</td><td style="padding:8px;text-align:right;font-weight:700">₹'+taxableEqLTCG.toLocaleString('en-IN')+'</td><td style="padding:8px;text-align:right">12.5%</td><td style="padding:8px;text-align:right;font-weight:900;color:var(--navy)">₹'+eqLTCGTax.toLocaleString('en-IN')+'</td></tr>'
+      +'<tr style="border-bottom:1px solid #e2e8f0"><td style="padding:8px 10px;font-weight:700;color:#92400e">Equity STCG</td><td style="padding:8px;text-align:right;font-weight:700">₹'+eqSTCG.toLocaleString('en-IN')+'</td><td style="padding:8px;text-align:right;color:#94a3b8">—</td><td style="padding:8px;text-align:right;font-weight:700">₹'+eqSTCG.toLocaleString('en-IN')+'</td><td style="padding:8px;text-align:right">20%</td><td style="padding:8px;text-align:right;font-weight:900;color:var(--navy)">₹'+eqSTCGTax.toLocaleString('en-IN')+'</td></tr>'
+      +(othLTCG>0?'<tr style="border-bottom:1px solid #e2e8f0"><td style="padding:8px 10px;font-weight:700;color:#64748b">Other LTCG</td><td style="padding:8px;text-align:right;font-weight:700">₹'+othLTCG.toLocaleString('en-IN')+'</td><td style="padding:8px;text-align:right;color:#94a3b8">—</td><td style="padding:8px;text-align:right;font-weight:700">₹'+othLTCG.toLocaleString('en-IN')+'</td><td style="padding:8px;text-align:right">12.5%</td><td style="padding:8px;text-align:right;font-weight:900">₹'+othLTCGTax.toLocaleString('en-IN')+'</td></tr>':'')
+      +(othSTCG>0?'<tr style="border-bottom:1px solid #e2e8f0"><td style="padding:8px 10px;font-weight:700;color:#64748b">Other STCG/50AA</td><td style="padding:8px;text-align:right;font-weight:700">₹'+othSTCG.toLocaleString('en-IN')+'</td><td style="padding:8px;text-align:right;color:#94a3b8">—</td><td style="padding:8px;text-align:right;font-weight:700">₹'+othSTCG.toLocaleString('en-IN')+'</td><td style="padding:8px;text-align:right">'+(cl.slab||30)+'%</td><td style="padding:8px;text-align:right;font-weight:900">₹'+othSTCGTax.toLocaleString('en-IN')+'</td></tr>':'')
+      +'<tr style="background:var(--navy);color:#fff;font-weight:900"><td style="padding:10px" colspan="4">TOTAL TAX PAYABLE</td><td style="padding:10px;text-align:right;color:#86EFAC">Saved: ₹'+saved.toLocaleString('en-IN')+'</td><td style="padding:10px;text-align:right;color:#FCD34D;font-size:14px">₹'+totalTax.toLocaleString('en-IN')+'</td></tr>'
+      +'</tbody></table></div></div>';
+  }
+
+  if(groupRemark){
+    document.getElementById('report-advisory').style.display='block';
+    document.getElementById('report-advisory-text').textContent=groupRemark;
+  }
+
+  const tbody = document.getElementById('report-tbody');
+  tbody.innerHTML='';
+  funds.forEach((f,i)=>{
+    const r=results[i]||{action:"HOLD",color:"#1B3A6B",bg:"#E8EEF8",switchTo:null,inTrustner:false,mode:"hold"};
+    const mc=MC[i%MC.length];
+    const gain=f.current-f.invested,yrs=holdingYears(f.purchaseDate);
+    const rec=r.switchTo?(r.mode==="switch-amc"?"🔄 Switch → "+r.switchTo.name.split(" ").slice(0,3).join(" "):"🔀 Redeem → "+r.switchTo.name.split(" ").slice(0,3).join(" ")):r.inTrustner?"✅ Hold & Reinvest Same":"—";
+    const tr=document.createElement('tr');
+    tr.style.background=i%2?"var(--bg1)":"var(--bg0)";
+    tr.innerHTML=
+      '<td style="font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(f.name||"—")+'</td>'
+      +'<td style="color:var(--ink3);white-space:nowrap">'+getCatLabel(f.category)+'</td>'
+      +'<td style="text-align:right">'+inr(f.invested)+'</td>'
+      +'<td style="text-align:right;font-weight:700;color:'+mc+'">'+inr(f.current)+'</td>'
+      +'<td style="text-align:right;font-weight:700;color:'+gc(gain)+'">'+inr(gain,true)+'</td>'
+      +'<td style="text-align:right;color:var(--green);font-weight:600;font-size:11px">'+(f.taxType==='debt50aa'?'—':((f.ltcgGain||0)===0?'—':'₹'+(f.ltcgGain||0).toLocaleString("en-IN")+'<br><span style="font-size:9px;color:var(--ink3)">Tax ₹'+Math.round(Math.max(0,f.ltcgGain||0)*0.125).toLocaleString("en-IN")+'</span>'))+'</td>'
+      +'<td style="text-align:right;color:var(--amber);font-weight:600;font-size:11px">'+((f.stcgGain||0)===0?'—':'₹'+(f.stcgGain||0).toLocaleString("en-IN")+'<br><span style="font-size:9px;color:var(--ink3)">Tax ₹'+(f.taxType==='equity'?Math.round(Math.max(0,f.stcgGain||0)*0.20):Math.round(Math.max(0,f.stcgGain||0)*getClient().slab/100)).toLocaleString("en-IN")+(f.taxType==='equity'?' @20%':' @'+getClient().slab+'%')+'</span>')+'</td>'
+      +'<td style="white-space:nowrap;font-size:10px;color:var(--ink3)">'+escH(f.taxBucket||'')+'</td>'
+      +'<td><span style="background:'+r.bg+';color:'+r.color+';font-size:10px;font-weight:800;padding:2px 7px;border-radius:4px;white-space:nowrap">'+r.action+'</span></td>'
+      +'<td style="font-size:10px;color:var(--navy);font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+rec+'</td>';
+    tbody.appendChild(tr);
+    if(remarks[i]){
+      const tr2=document.createElement('tr');
+      tr2.innerHTML='<td colspan="10" style="padding:6px 12px 10px;background:'+mc+'07"><div style="font-size:11px;color:var(--ink);line-height:1.7;font-family:Georgia,serif;border-left:3px solid '+mc+';padding-left:8px">'+remarks[i]+'</div></td>';
+      tbody.appendChild(tr2);
+    }
+  });
+
+  const trustnEl = document.getElementById('report-trustner');
+  trustnEl.innerHTML=[["Large","Nippon India Large Cap","17.5% 5Y"],["Mid","HDFC Mid Cap Opp.","22.8% 3Y"],["Flexi","HDFC Flexi Cap","20.5% 5Y"],["Multi","Kotak Multicap","24.6% 3Y"],["Hybrid","ICICI Pru Eq & Debt","18.9% 5Y"],["BAF","HDFC Bal. Adv.","17.1% 5Y"]].map(([c,f,r])=>
+    '<div style="background:#fff;border-radius:8px;padding:8px 10px;border:1px solid var(--navyP)"><div style="font-size:9px;color:var(--navy);font-weight:700">'+c.toUpperCase()+' CAP</div><div style="font-size:11px;font-weight:700;color:var(--ink)">'+f+'</div><div style="font-size:11px;color:var(--green);font-weight:700">'+r+' ↑</div></div>'
+  ).join('');
+
+  // ═══ RENDER HARVEST PLAN IN REPORT ═══
+  renderReportHarvestPlan(cl, results);
+}
+
+function renderReportHarvestPlan(cl, results) {
+  const el = document.getElementById('report-harvest-plan');
+  if(!el) return;
+  const remainingExemption = Math.max(0, LTCG_LIMIT - (cl.ltcg||0));
+  const slabPct = (cl.slab||30)/100;
+  const age = parseInt(cl.age)||35;
+  const risk = (cl.risk||'').toLowerCase();
+
+  // Identify harvestable equity LTCG funds
+  const harvestable = [];
+  funds.forEach((f,i)=>{
+    if(!EQUITY_CATS.includes(f.category)) return;
+    if(holdingYears(f.purchaseDate)<1) return;
+    const g = f.current - f.invested;
+    if(g<=0) return;
+    harvestable.push({...f, idx:i, gain:g});
+  });
+  harvestable.sort((a,b)=>b.gain-a.gain);
+
+  let filled=0;
+  const plan=[];
+  for(const f of harvestable){
+    if(filled>=remainingExemption) break;
+    const needed=Math.min(f.gain, remainingExemption-filled);
+    const pct=((needed/f.gain)*100).toFixed(1);
+    const amcN=f.name.split(' ')[0];
+    const catLbl=getCatLabel(f.category);
+    let action='Switch / Rebuy';
+    let switchTo=catLbl+' fund ('+amcN+' or better)';
+    const fU=f.units||0, fNAV=f.nav||(fU>0?f.current/fU:0);
+    const fraction=needed/f.gain;
+    const exUnits=fU>0?(fraction*fU):0;
+    const sellVal=exUnits>0?exUnits*fNAV:fraction*f.current;
+    plan.push({name:f.name,category:getCatLabel(f.category),harvest:needed,pct:pct,totalGain:f.gain,invested:f.invested,current:f.current,action:action,switchTo:switchTo,totalUnits:fU,nav:fNAV,exactUnits:exUnits,sellValue:sellVal});
+    filled+=needed;
+  }
+
+  const lossFunds=[];
+  funds.forEach(f=>{const g=f.current-f.invested;if(g<0)lossFunds.push({name:f.name,category:getCatLabel(f.category),loss:Math.abs(g)});});
+
+  let riskBucket='moderate';
+  if(risk.includes('conservative'))riskBucket='conservative';
+  else if(risk.includes('aggressive')&&!risk.includes('moderate'))riskBucket='aggressive';
+  if(age>55&&riskBucket==='aggressive')riskBucket='moderate';
+  if(age>65)riskBucket='conservative';
+
+  const taxSaved=Math.round(filled*0.125);
+
+  let h='';
+
+  // ══════ HARVEST PLAN HEADER ══════
+  h+='<div style="border:3px solid var(--navy);border-radius:12px;overflow:hidden">';
+  h+='<div style="background:linear-gradient(135deg,#0f2b46,#1B3A6B);padding:18px 22px;color:#fff">';
+  h+='<div style="font-size:9px;color:rgba(255,255,255,.35);font-family:monospace;margin-bottom:3px">MERASIP · TRUSTNER ASSET SERVICES</div>';
+  h+='<div style="font-size:18px;font-weight:900;margin-bottom:3px">🎯 S.M.A.R.T Tax Harvest Plan — FY 2025-26</div>';
+  h+='<div style="font-size:11px;color:rgba(255,255,255,.5)">'+(cl.name||'Client')+' · Age '+(cl.age||'—')+' · '+cl.risk+' · Tax Slab '+(cl.slab||30)+'%</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px">';
+  h+=[
+    [inr(LTCG_LIMIT),'EXEMPTION LIMIT','#86EFAC'],
+    [inr(cl.ltcg||0),'ALREADY REALISED','#FCD34D'],
+    [inr(remainingExemption),'ROOM LEFT','#86EFAC'],
+    [inr(taxSaved),'TAX SAVED','#86EFAC'],
+  ].map(([v,l,c])=>'<div style="background:rgba(255,255,255,.08);border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:900;color:'+c+'">'+v+'</div><div style="font-size:8px;color:rgba(255,255,255,.4);margin-top:3px;letter-spacing:.3px;font-weight:700">'+l+'</div></div>').join('');
+  h+='</div></div>';
+
+  // ══════ BODY ══════
+  h+='<div style="background:#fff;padding:18px 22px">';
+
+  // ══════ HARVEST TABLE ══════
+  if(plan.length>0){
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:15px">💰</span><span style="font-size:12px;font-weight:900;color:var(--navy)">Step 1: Funds to Harvest (Tax-Free under ₹1.25L Exemption)</span></div>';
+    h+='<table style="width:100%;border-collapse:collapse;font-size:11px;border:2px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:18px">';
+    h+='<thead><tr style="background:linear-gradient(135deg,#0f2b46,#1B3A6B);color:#fff;font-size:8px;text-transform:uppercase;letter-spacing:.4px">';
+    h+='<th style="padding:8px 8px;text-align:left">Fund Name</th>';
+    h+='<th style="padding:8px 6px;text-align:right">Total Gain</th>';
+    h+='<th style="padding:8px 6px;text-align:right">LTCG to Harvest</th>';
+    h+='<th style="padding:8px 6px;text-align:right;color:#86EFAC">Units to Sell</th>';
+    h+='<th style="padding:8px 6px;text-align:right">Sell Value</th>';
+    h+='<th style="padding:8px 6px;text-align:center">Action</th>';
+    h+='<th style="padding:8px 6px;text-align:left">Reinvest In</th>';
+    h+='</tr></thead><tbody>';
+    let rptSellTotal=0;
+    plan.forEach((p,i)=>{
+      rptSellTotal+=p.sellValue||0;
+      const hasU=p.exactUnits>0;
+      h+='<tr style="border-bottom:1px solid #f0f0f0;background:'+(i%2?'#f8fafc':'#fff')+'">';
+      h+='<td style="padding:8px"><div style="font-weight:700;color:var(--navy);font-size:10px">'+escH(p.name)+'</div><div style="font-size:8px;color:#94a3b8">'+escH(p.category)+(p.nav>0?' · NAV ₹'+p.nav.toFixed(2):'')+'</div></td>';
+      h+='<td style="padding:8px 6px;text-align:right;color:#64748b;font-size:10px">'+inr(p.totalGain)+'</td>';
+      h+='<td style="padding:8px 6px;text-align:right;font-weight:900;font-size:12px;color:#16a34a">'+inr(p.harvest)+'</td>';
+      h+='<td style="padding:8px 6px;text-align:right;font-weight:900;color:#1B3A6B;font-size:11px">'+(hasU?p.exactUnits.toFixed(3)+'<div style="font-size:8px;color:#94a3b8;font-weight:600">'+p.pct+'% of '+p.totalUnits.toFixed(3)+'</div>':p.pct+'%')+'</td>';
+      h+='<td style="padding:8px 6px;text-align:right;font-weight:700;color:var(--navy);font-size:10px">'+inr(p.sellValue||0)+'</td>';
+      h+='<td style="padding:8px 6px;text-align:center"><span style="padding:3px 6px;border-radius:5px;font-size:8px;font-weight:800;background:#d1fae5;color:#065f46">🔄 Switch</span></td>';
+      h+='<td style="padding:8px 6px;font-weight:700;color:var(--navy);font-size:9px">'+escH(p.switchTo)+'</td>';
+      h+='</tr>';
+    });
+    h+='<tr style="background:linear-gradient(135deg,#0f2b46,#1B3A6B);color:#fff;font-weight:900;font-size:10px">';
+    h+='<td style="padding:10px" colspan="2">TOTAL HARVEST ('+plan.length+' funds)</td>';
+    h+='<td style="padding:10px;text-align:right;color:#86EFAC;font-size:14px">'+inr(filled)+'</td>';
+    h+='<td style="padding:10px;text-align:right;color:#86EFAC" colspan="1"></td>';
+    h+='<td style="padding:10px;text-align:right;color:#FCD34D">'+inr(rptSellTotal)+'</td>';
+    h+='<td style="padding:10px;text-align:center;color:#86EFAC" colspan="2">TAX=₹0 · Saved '+inr(taxSaved)+' ✅</td>';
+    h+='</tr></tbody></table>';
+  } else {
+    h+='<div style="background:#f0fdf4;border:2px solid #86efac;border-radius:8px;padding:14px;margin-bottom:18px;text-align:center;color:#065f46;font-weight:700">'
+      +(remainingExemption<=0?'✅ LTCG exemption fully utilised.':'No equity LTCG funds available.')+'</div>';
+  }
+
+  // ══════ LOSS HARVEST ══════
+  if(lossFunds.length>0){
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:15px">📉</span><span style="font-size:12px;font-weight:900;color:#dc2626">Step 2: Loss Harvesting</span></div>';
+    h+='<table style="width:100%;border-collapse:collapse;font-size:11px;border:2px solid #fecaca;border-radius:8px;overflow:hidden;margin-bottom:18px">';
+    h+='<thead><tr style="background:#fef2f2;color:#991b1b;font-size:9px;text-transform:uppercase;letter-spacing:.5px">';
+    h+='<th style="padding:9px 10px;text-align:left">Fund</th><th style="padding:9px 8px;text-align:left">Category</th><th style="padding:9px 8px;text-align:right">Loss</th><th style="padding:9px 8px;text-align:left">Action</th></tr></thead><tbody>';
+    lossFunds.forEach((lf,i)=>{
+      h+='<tr style="border-bottom:1px solid #fecaca;background:'+(i%2?'#fff5f5':'#fff')+'"><td style="padding:9px 10px;font-weight:700;color:#991b1b">'+escH(lf.name)+'</td>';
+      h+='<td style="padding:9px 8px;color:#64748b">'+escH(lf.category)+'</td>';
+      h+='<td style="padding:9px 8px;text-align:right;font-weight:900;color:#dc2626;font-size:13px">-'+inr(lf.loss)+'</td>';
+      h+='<td style="padding:9px 8px;font-weight:700;color:#dc2626">Book loss → offset gains → switch to better fund</td></tr>';
+    });
+    h+='</tbody></table>';
+  }
+
+  // ══════ REINVESTMENT ══════
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:15px">💡</span><span style="font-size:12px;font-weight:900;color:var(--navy)">Step 3: Reinvestment Suggestions (Age '+(cl.age||'—')+')</span></div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px">';
+  [{key:'conservative',label:'Conservative',icon:'🛡️',grad:'linear-gradient(135deg,#065f46,#10b981)',bdr:'#10b981'},
+   {key:'moderate',label:'Moderate',icon:'⚖️',grad:'linear-gradient(135deg,#1e40af,#3b82f6)',bdr:'#3b82f6'},
+   {key:'aggressive',label:'Aggressive',icon:'🚀',grad:'linear-gradient(135deg,#991b1b,#ef4444)',bdr:'#ef4444'}
+  ].forEach(prof=>{
+    const active=prof.key===riskBucket;
+    h+='<div style="border-radius:10px;overflow:hidden;border:2px solid '+(active?prof.bdr:'#e2e8f0')+';'+(active?'box-shadow:0 3px 10px rgba(0,0,0,.12)':'')+'">';
+    h+='<div style="background:'+(active?prof.grad:'#f1f5f9')+';padding:8px 10px;color:'+(active?'#fff':'#64748b')+';font-size:10px;font-weight:900;text-align:center">'+prof.icon+' '+prof.label.toUpperCase()+(active?' ← RECOMMENDED':'')+'</div>';
+    REINVEST_SUGGESTIONS[prof.key].forEach(s=>{
+      h+='<div style="padding:7px 10px;border-bottom:1px solid #f0f0f0;background:#fff">';
+      h+='<div style="font-size:11px;font-weight:700;color:var(--navy)">'+escH(s.name)+'</div>';
+      h+='<div style="display:flex;gap:5px;margin-top:2px"><span style="font-size:9px;background:#f1f5f9;padding:1px 5px;border-radius:3px;color:#64748b;font-weight:600">'+escH(s.cat)+'</span><span style="font-size:9px;background:#d1fae5;padding:1px 5px;border-radius:3px;color:#065f46;font-weight:700">'+escH(s.ret)+'</span></div>';
+      h+='<div style="font-size:9px;color:#94a3b8;margin-top:2px;line-height:1.4">'+escH(s.why)+'</div></div>';
+    });
+    h+='</div>';
+  });
+  h+='</div>';
+
+  // ══════ EXECUTION STEPS ══════
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:15px">📋</span><span style="font-size:12px;font-weight:900;color:var(--navy)">Execution Steps</span></div>';
+  h+='<div style="background:#f0f9ff;border:2px solid #bae6fd;border-radius:10px;padding:16px 18px;margin-bottom:14px">';
+  const steps=[];
+  if(plan.length>0){
+    steps.push('Log in to AMC portal / MF Central / MFU');
+    steps.push('<b>Redeem these units</b> to book tax-free LTCG:<br>'+plan.map(p=>{
+      const sn=escH(p.name.split(' ').slice(0,4).join(' '));
+      return p.exactUnits>0
+        ?'&nbsp;&nbsp;→ <b>'+sn+'</b>: Sell <b>'+p.exactUnits.toFixed(3)+' units</b> ('+p.pct+'%) ≈ '+inr(p.sellValue)
+        :'&nbsp;&nbsp;→ <b>'+sn+'</b>: Sell '+p.pct+'% of holding';
+    }).join('<br>'));
+    steps.push('<b>Reinvest</b> within 1-2 business days — switch within same AMC to a better fund, or rebuy same if it\'s already the best in its category');
+    if(lossFunds.length)steps.push('<b>Book losses</b>: '+lossFunds.map(lf=>escH(lf.name.split(' ').slice(0,4).join(' '))).join(', ')+' — offset against gains');
+    steps.push('⚠️ <b>Complete before March 31, 2026</b> for FY 2025-26 exemption');
+    steps.push('Keep redemption confirmations for <b>ITR filing</b>');
+  } else {
+    steps.push('No harvesting actions required at this time');
+  }
+  h+='<div style="display:flex;flex-direction:column;gap:8px">';
+  steps.forEach((s,i)=>{
+    h+='<div style="display:flex;gap:10px;align-items:flex-start">';
+    h+='<div style="min-width:24px;height:24px;background:var(--navy);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0">'+(i+1)+'</div>';
+    h+='<div style="font-size:11px;color:#1e293b;line-height:1.6;padding-top:3px">'+s+'</div></div>';
+  });
+  h+='</div></div>';
+
+  // Disclaimer
+  h+='<div style="font-size:8px;color:#94a3b8;line-height:1.5;border-top:1px solid #e2e8f0;padding-top:8px">'
+    +'⚠️ All calculations based on Income Tax Act, 1961. Consult a tax professional for final decisions. Past performance does not guarantee future returns. Mutual fund investments are subject to market risk.</div>';
+
+  h+='</div></div>'; // close body + outer
+  el.innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════
+// UPLOAD MODAL
+// ═══════════════════════════════════════════════
+function openUpload() {
+  document.getElementById('upload-modal').classList.add('open'); uploadReset();
+  const saved = localStorage.getItem('merasip_api_key');
+  const key = saved || _DEFAULT_KEY;
+  if (key) document.getElementById('anthropic-api-key').value = key;
+}
+function closeUpload() { document.getElementById('upload-modal').classList.remove('open'); }
+function uploadReset() {
+  document.getElementById('upload-step-input').style.display='block';
+  document.getElementById('upload-step-loading').classList.add('hidden');
+  document.getElementById('upload-step-preview').classList.add('hidden');
+  document.getElementById('upload-error').classList.add('hidden');
+  document.getElementById('upload-paste').value='';
+  document.getElementById('upload-file-input').value='';
+}
+function uploadLog(msg) {
+  const el=document.getElementById('upload-log');
+  el.textContent+=(el.textContent?"\\n":"")+msg;
+  el.scrollTop=el.scrollHeight;
+}
+async function handleFileUpload(inp) {
+  const file=inp.files[0]; if(!file)return;
+  document.getElementById('upload-step-input').style.display='none';
+  document.getElementById('upload-step-loading').classList.remove('hidden');
+  document.getElementById('upload-log').textContent='Reading '+file.name+'...';
+  await new Promise(r=>setTimeout(r,80));
+  try {
+    let txt='';
+    if(file.name.endsWith('.pdf')){
+      uploadLog('Loading PDF engine...');
+      if(!window.pdfjsLib){
+        await new Promise((res,rej)=>{
+          const s=document.createElement('script');
+          s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+          s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';res();};
+          s.onerror=rej; document.head.appendChild(s);
+        });
+      }
+      const buf=await file.arrayBuffer();
+      const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+      for(let p=1;p<=pdf.numPages;p++){
+        const pg=await pdf.getPage(p);
+        const ct=await pg.getTextContent();
+        txt+=ct.items.map(x=>x.str).join(' ')+'\n';
+        if(p%5===0||p===pdf.numPages)uploadLog('  Extracted '+p+'/'+pdf.numPages+' pages');
+      }
+    } else {
+      txt=await file.text();
+      uploadLog('File read ('+txt.length+' chars)');
+    }
+    if(!txt.trim())throw new Error('No text found.');
+    await parseWithAI(txt);
+  } catch(e) {
+    document.getElementById('upload-step-loading').classList.add('hidden');
+    document.getElementById('upload-step-input').style.display='block';
+    showUploadError(e.message);
+  }
+}
+async function runExtract() {
+  const txt=document.getElementById('upload-paste').value;
+  if(!txt.trim()){showUploadError('Please paste some text first.');return;}
+  document.getElementById('upload-step-input').style.display='none';
+  document.getElementById('upload-step-loading').classList.remove('hidden');
+  document.getElementById('upload-log').textContent='Reading pasted text...';
+  await new Promise(r=>setTimeout(r,80));
+  try { await parseWithAI(txt); }
+  catch(e) {
+    document.getElementById('upload-step-loading').classList.add('hidden');
+    document.getElementById('upload-step-input').style.display='block';
+    showUploadError(e.message);
+  }
+}
+async function parseWithAI(txt) {
+  uploadLog('📊 Parsing portfolio data...');
+  const parsed = parsePortfolioText(txt);
+  if(!parsed.funds?.length) throw new Error('No funds found in the data. Try pasting CAS text instead.');
+  uploadLog('✅ '+parsed.funds.length+' funds extracted');
+  // Auto-fill client info if found
+  if(parsed.clientName) { const el=document.getElementById('inp-name'); if(el&&!el.value) el.value=parsed.clientName; }
+  if(parsed.pan) { const el=document.getElementById('inp-pan'); if(el&&!el.value) el.value=parsed.pan; }
+  if(parsed.dob) { const el=document.getElementById('inp-age'); if(el&&!el.value) { const age=Math.floor((Date.now()-new Date(parsed.dob))/(365.25*86400000)); if(age>0&&age<120) el.value=age; } }
+  extractedPreview=parsed;
+  showPreview(parsed);
+}
+
+function parsePortfolioText(txt) {
+  const result = {clientName:'',pan:'',dob:'',funds:[]};
+  // Extract client info
+  const panM = txt.match(/PAN[\s.:]*([A-Z]{5}\d{4}[A-Z])/i);
+  if(panM) result.pan = panM[1];
+  const dobM = txt.match(/DOB[\s.:]*(\d{2})-(\d{2})-(\d{4})/i);
+  if(dobM) result.dob = dobM[3]+'-'+dobM[2]+'-'+dobM[1];
+  // Try to find name before PAN
+  const nameM = txt.match(/([A-Z][A-Z\s]{3,30}?)\s*\(?PAN/);
+  if(nameM) result.clientName = nameM[1].trim();
+
+  // Category detection
+  const catMap = [
+    [/aggressive\s*hybrid/i, 'hybrid'],
+    [/balanced\s*adv|BAF/i, 'baf'],
+    [/small\s*cap/i, 'small'],
+    [/mid\s*cap/i, 'mid'],
+    [/large\s*&\s*mid|large.*mid/i, 'large-mid'],
+    [/large\s*cap/i, 'large'],
+    [/flexi\s*cap/i, 'flexi'],
+    [/multi\s*cap/i, 'multi'],
+    [/multi.?asset/i, 'multi-asset'],
+    [/hybrid/i, 'hybrid'],
+    [/elss|tax\s*sav/i, 'elss'],
+    [/index|nifty|sensex/i, 'index'],
+    [/debt|liquid|ultra\s*short|money\s*market|gilt|bond|overnight|corporate|short\s*dur/i, 'debt'],
+    [/overseas|global|international|FOF|foreign/i, 'intl-fof'],
+    [/value|contra/i, 'value'],
+    [/power|infra|sectoral|pharma|banking|thematic|energy|technology|consumption|PSU|dividend\s*yield|manufacturing|quant|ESG|MNC|sector/i, 'sector'],
+  ];
+  function detectCat(name) {
+    for(const [re,cat] of catMap) if(re.test(name)) return cat;
+    return 'flexi';
+  }
+  const parseNum = s => {
+    if(!s) return 0;
+    return parseFloat(String(s).replace(/,/g,'').trim())||0;
+  };
+  const strongAMCs = ['hdfc','icici','sbi','axis','kotak','nippon','mirae','canara','dsp','bandhan','pgim','motilal'];
+
+  // Strategy: find all ISIN blocks — each ISIN marks a fund
+  // PDF text from pdf.js joins items with spaces, so we work with the whole text
+  // Pattern: FundName (ISINcode) date (NNNdays) sensex invested divr units price nav curvalue date curvalue ... total gain abs% xirr%
+  const isinRegex = /([A-Za-z][A-Za-z\s&.()'\-]+?)\s*\(INF([A-Z0-9]+)\)\s*(?:Folio\s*:\s*[\d\/]+\s*)?(\d{2}-\d{2}-\d{2})\s*\((\d+)\s*Days?\)/gi;
+  let match;
+  const fundBlocks = [];
+  while((match = isinRegex.exec(txt)) !== null) {
+    fundBlocks.push({
+      name: match[1].replace(/\s+/g,' ').trim(),
+      isin: 'INF'+match[2],
+      dateStr: match[3],
+      days: parseInt(match[4]),
+      pos: match.index,
+      endPos: match.index + match[0].length
+    });
+  }
+
+  // For each fund block, extract the numbers that follow
+  for(let fi=0; fi<fundBlocks.length; fi++) {
+    const fb = fundBlocks[fi];
+    // Get text after this match until the next ISIN or end
+    const nextPos = fi+1 < fundBlocks.length ? fundBlocks[fi+1].pos : txt.length;
+    const blockText = txt.slice(fb.endPos, nextPos);
+
+    // Extract all numbers from the immediate vicinity (first line of numbers after date)
+    const firstNums = [];
+    const numRegex = /[\d,]+\.\d{1,4}/g;
+    let nm;
+    // Get numbers right after the (NNN Days) marker
+    const afterDays = txt.slice(fb.endPos, fb.endPos + 500);
+    while((nm = numRegex.exec(afterDays)) !== null) {
+      firstNums.push(parseNum(nm[0]));
+      if(firstNums.length >= 20) break;
+    }
+
+    // The summary row format after "date (days)":
+    // sensex, invested, divr(0.00), units, price, nav, curvalue, date(17-Mar), curvalue2, divReinv(0.00), divPaid(0.00), total, gain, abs%, xirr%
+    // We need: invested (index ~1), current/total (near end)
+    if(firstNums.length < 8) continue;
+
+    let sensex=0, invested=0, current=0, totalUnits=0, latestNAV=0;
+    // First number > 10000 is likely sensex, next is invested
+    let idx = 0;
+    if(firstNums[0] > 10000) { sensex = firstNums[0]; idx = 1; }
+    invested = firstNums[idx];
+    // Units & NAV from summary row after (NNN Days):
+    // Summary: sensex invested divr UNITS PRICE CUR_NAV DATE CUR_VALUE
+    // Find units by looking for 4-decimal numbers in raw text
+    const fourDecNums = afterDays.match(/[\d,]+\.\d{4}/g);
+    if(fourDecNums && fourDecNums.length >= 1) {
+      const u = parseNum(fourDecNums[0]);
+      if(u > 0.1 && u < 500000) {
+        totalUnits = u;
+        // Next two numbers after units in firstNums are price and NAV
+        // Find this unit value's position in firstNums
+        for(let fi=0; fi<firstNums.length; fi++) {
+          if(Math.abs(firstNums[fi] - u) < 0.001) {
+            // fi+1 = price, fi+2 = current NAV
+            if(fi+2 < firstNums.length) {
+              const navC = firstNums[fi+2];
+              if(navC > 1 && navC < 100000) latestNAV = navC;
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    // Find the "Total" line in this block for reliable invested/current/units
+    const totalMatch = blockText.match(/Total\s+([\d,]+\.?\d*)\s/);
+    if(totalMatch) {
+      const tInv = parseNum(totalMatch[1]);
+      if(tInv > 0) invested = tInv;
+    }
+    // Extract units from Total row
+    // Format: Total invested(0) divr(1) stamp(2) tds(3) price(4) units(5) cumm_units(6) curvalue(7)...
+    const totalRowMatch = blockText.match(/Total[\s\S]{0,400}/);
+    if(totalRowMatch) {
+      const trNums = totalRowMatch[0].match(/[\d,]+\.\d{1,4}/g);
+      if(trNums && trNums.length >= 7) {
+        // Find units: look for 4-decimal numbers that appear twice in a row (units = cumm_units)
+        for(let ti=1; ti<trNums.length-1; ti++) {
+          const a = parseNum(trNums[ti]), b = parseNum(trNums[ti+1]);
+          // Units and cumm_units should be equal (or very close) and have 4 decimals
+          if(trNums[ti].includes('.') && trNums[ti].split('.')[1].length === 4
+            && trNums[ti+1].includes('.') && trNums[ti+1].split('.')[1].length === 4
+            && Math.abs(a - b) < 0.01 && a > 0 && a < 500000) {
+            totalUnits = a;
+            // Price/NAV is right before units
+            if(ti > 0) {
+              const navCandidate = parseNum(trNums[ti-1]);
+              if(navCandidate > 1 && navCandidate < 10000) latestNAV = navCandidate;
+            }
+            break;
+          }
+        }
+        // Fallback: if no matching pair found, try index 5 and 6
+        if(totalUnits === 0 && trNums.length >= 7) {
+          const u5 = parseNum(trNums[5]), u6 = parseNum(trNums[6]);
+          if(u5 > 0 && u5 < 500000 && Math.abs(u5 - u6) < 1) {
+            totalUnits = u5;
+          }
+        }
+      }
+    }
+    // Also try to get NAV from the summary header row (before Total)
+    // Summary: invested 0.00 UNITS PRICE CUR_NAV DATE CUR_VALUE
+    if(latestNAV === 0 && totalUnits > 0 && current > 0) {
+      latestNAV = Math.round((current / totalUnits) * 10000) / 10000;
+    }
+
+    // Current value: look for pattern after "17-Mar" or "16-Mar" or similar
+    const curValMatch = afterDays.match(/\d{1,2}-[A-Z][a-z]{2}\s+([\d,]+\.\d{2})/);
+    if(curValMatch) {
+      current = parseNum(curValMatch[1]);
+    }
+
+    // Fallback: find current in Total row
+    if(current === 0) {
+      // Total row has: invested 0.00 ... units units curvalue 0.00 0.00 curvalue total gain abs xirr
+      const totalNums = blockText.match(/Total[\s\S]{0,300}/);
+      if(totalNums) {
+        const tnArr = totalNums[0].match(/[\d,]+\.\d{1,4}/g);
+        if(tnArr && tnArr.length >= 5) {
+          // Current value is after the 0.00 entries, look for larger values
+          for(let t=tnArr.length-1; t>=0; t--) {
+            const v = parseNum(tnArr[t]);
+            if(v > invested * 0.3 && v < invested * 5 && v !== invested && v > 50) {
+              current = v;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // If still no current, try from firstNums — look for cur value after nav date
+    if(current === 0 && firstNums.length >= 10) {
+      // After sensex+invested+divr+units+price+nav+curvalue = index 6 or 7
+      for(let n=6; n<Math.min(12, firstNums.length); n++) {
+        if(firstNums[n] > invested*0.3 && firstNums[n] < invested*5) {
+          current = firstNums[n];
+          break;
+        }
+      }
+    }
+
+    if(invested <= 0 || current <= 0) continue;
+
+    // Parse purchase date
+    const dp = fb.dateStr.split('-');
+    const yr = parseInt(dp[2]);
+    const purchaseDate = (yr>50?'19':'20')+dp[2]+'-'+dp[1]+'-'+dp[0];
+
+    // Performance
+    const gain = current - invested;
+    const absRet = invested > 0 ? (gain/invested)*100 : 0;
+    let perf = 'avg';
+    if(absRet > 30) perf = 'good';
+    else if(absRet < 5) perf = 'bad';
+
+    // AMC quality
+    const amcWord = fb.name.split(/\s/)[0].toLowerCase();
+    const amcQ = strongAMCs.some(a=>amcWord.includes(a)) ? 'strong' : 'strong';
+
+    // Parse transaction rows for LTCG/STCG split
+    // Transaction pattern: SrNo TransType Date Amount ... Gain Days Abs% XIRR%
+    const cat = detectCat(fb.name);
+    let ltcgGain = 0, stcgGain = 0;
+    let txnFound = false;
+    let minTxnDays = Infinity; // Track minimum holding days across all parsed transactions
+    const txnRegex = /\d+\s+(SIP Purchase|Switch In|S\s*T\s*P\s*In|Purchase|STP In|STP\s*In)\s+(\d{2}-\d{2}-\d{2})\s+/gi;
+    let txnMatch;
+    while((txnMatch = txnRegex.exec(blockText)) !== null) {
+      // Get the rest of this transaction line (all numbers after the date)
+      const txnRest = blockText.slice(txnMatch.index + txnMatch[0].length, txnMatch.index + txnMatch[0].length + 400);
+      const lineEnd = txnRest.indexOf('\n');
+      const txnLine = lineEnd > 0 ? txnRest.slice(0, lineEnd) : txnRest.slice(0, 300);
+
+      // Extract all numbers from the line
+      const nums = [];
+      const nRe = /-?[\d,]+\.?\d*/g;
+      let n;
+      while((n = nRe.exec(txnLine)) !== null) {
+        const v = parseNum(n[0]);
+        if(!isNaN(v)) nums.push(v);
+      }
+
+      // Need at least 10 numbers to have Gain and Days
+      if(nums.length < 10) continue;
+
+      // From the end: XIRR%, Abs%, Days(integer), Gain, Total, ...
+      // Days is an integer (no decimal), typically 3-4 digits, found near end
+      // Find Days: scan from end looking for integer in range 1-3000
+      let days = 0, txnGain = 0;
+      for(let ni = nums.length - 1; ni >= nums.length - 5; ni--) {
+        if(ni < 0) break;
+        if(Number.isInteger(nums[ni]) && nums[ni] >= 1 && nums[ni] <= 3000) {
+          days = nums[ni];
+          // Gain is right before Days
+          if(ni > 0) txnGain = nums[ni - 1];
+          break;
+        }
+      }
+
+      if(days === 0) continue;
+      txnFound = true;
+
+      // Parse transaction date for debt pre/post April 2023 check
+      const tdp = txnMatch[2].split('-');
+      const tyr = parseInt(tdp[2]);
+      const txnDate = (tyr > 50 ? '19' : '20') + tdp[2] + '-' + tdp[1] + '-' + tdp[0];
+
+      // Also calculate days from transaction date to today as fallback verification
+      const txnDateObj = new Date(txnDate);
+      const todayDate = new Date();
+      const calcDays = Math.floor((todayDate - txnDateObj) / (1000*60*60*24));
+      // Use the larger of parsed days and calculated days (parsed can be wrong)
+      const effectiveDays = Math.max(days, calcDays > 0 ? calcDays : days);
+
+
+
+      if(effectiveDays < minTxnDays) minTxnDays = effectiveDays;
+      const bucket = getTaxBucket(cat, fb.name, txnDate);
+      const classified = classifyTxnGain(txnGain, effectiveDays, bucket);
+      ltcgGain += classified.ltcg;
+      stcgGain += classified.stcg;
+    }
+
+    // If no transactions found, classify entire gain based on overall holding
+    if(!txnFound) {
+      const bucket = getTaxBucket(cat, fb.name, purchaseDate);
+      const classified = classifyTxnGain(gain, fb.days, bucket);
+      ltcgGain = classified.ltcg;
+      stcgGain = classified.stcg;
+    }
+
+    // Reconcile: if parsed LTCG+STCG != total gain, redistribute difference
+    const parsedTotal = ltcgGain + stcgGain;
+    if(Math.abs(parsedTotal - gain) > 1 && txnFound) {
+      const diff = gain - parsedTotal;
+      // Smart assignment: if only one bucket has gains, assign diff there
+      // If both have gains, distribute proportionally
+      if(stcgGain === 0 && ltcgGain !== 0) {
+        ltcgGain += diff;
+      } else if(ltcgGain === 0 && stcgGain !== 0) {
+        stcgGain += diff;
+      } else if(ltcgGain !== 0 && stcgGain !== 0) {
+        const ratio = ltcgGain / parsedTotal;
+        ltcgGain += Math.round(diff * ratio * 100) / 100;
+        stcgGain += diff - Math.round(diff * ratio * 100) / 100;
+      } else {
+        // Both zero — use overall holding
+        if(fb.days >= 365) ltcgGain += diff;
+        else stcgGain += diff;
+      }
+    }
+
+    // Safety check: if ALL parsed transactions have holding > LTCG threshold,
+    // there should be zero STCG. This fixes misparsed edge cases.
+    if(txnFound && stcgGain !== 0 && minTxnDays !== Infinity) {
+      const overallBucket = getTaxBucket(cat, fb.name, purchaseDate);
+      if(overallBucket.ltcgDays && minTxnDays >= overallBucket.ltcgDays) {
+        // All transactions are long-term — move any stcg to ltcg
+        ltcgGain += stcgGain;
+        stcgGain = 0;
+      }
+    }
+
+    // Determine tax bucket label for display
+    const dispBucket = getTaxBucket(cat, fb.name, purchaseDate);
+
+    // Calculate NAV from current/units if not already found
+    if(totalUnits > 0 && latestNAV === 0) {
+      latestNAV = Math.round((current / totalUnits) * 100) / 100;
+    }
+
+    result.funds.push({
+      name: fb.name,
+      category: cat,
+      invested, current, purchaseDate,
+      performance: perf,
+      amcQuality: amcQ,
+      switchTarget: '',
+      units: totalUnits,
+      nav: latestNAV,
+      ltcgGain: Math.round(ltcgGain * 100) / 100,
+      stcgGain: Math.round(stcgGain * 100) / 100,
+      taxBucket: dispBucket.label,
+      taxType: dispBucket.type,
+    });
+  }
+
+  // Deduplicate
+  const seen = new Set();
+  result.funds = result.funds.filter(f => {
+    const key = f.name.toLowerCase().replace(/\s+/g,'');
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  return result;
+}
+function showUploadError(msg) {
+  const el=document.getElementById('upload-error');
+  el.textContent=msg; el.classList.remove('hidden');
+}
+function showPreview(data) {
+  document.getElementById('upload-step-loading').classList.add('hidden');
+  document.getElementById('upload-step-preview').classList.remove('hidden');
+  document.getElementById('upload-preview-summary').textContent='✅ '+(data.funds?.length||0)+' fund(s) extracted'+(data.clientName?' · '+data.clientName:'');
+  const tbody=document.getElementById('upload-preview-tbody');
+  tbody.innerHTML='';
+  (data.funds||[]).forEach((f,i)=>{
+    const tr=document.createElement('tr');
+    tr.style.background=i%2?'var(--bg1)':'var(--bg0)';
+    tr.innerHTML='<td style="font-weight:600;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escH(f.name)+'</td>'
+      +'<td style="color:var(--ink3)">'+getCatLabel(f.category)+'</td>'
+      +'<td style="text-align:right">'+inr(f.invested)+'</td>'
+      +'<td style="text-align:right;font-weight:700;color:'+(f.current>=f.invested?'var(--green)':'var(--red)')+'">'+inr(f.current)+'</td>';
+    tbody.appendChild(tr);
+  });
+}
+function applyExtracted() {
+  if(!extractedPreview)return;
+  const d=extractedPreview;
+  if(d.clientName)document.getElementById('inp-name').value=d.clientName;
+  if(d.pan)document.getElementById('inp-pan').value=d.pan;
+  if(d.age)document.getElementById('inp-age').value=d.age;
+  if(d.funds?.length)funds=d.funds;
+  remarks={};
+  closeUpload();
+  showScreen('data');
+}
+
+// ═══════════════════════════════════════════════
+// TAX HARVEST PLAN ENGINE
+// ═══════════════════════════════════════════════
+function getAMCKey(name) {
+  const n = (name||'').toLowerCase();
+  for (const k of Object.keys(SWITCH_TARGETS)) {
+    if (n.includes(k)) return k;
+  }
+  return '';
+}
+
+function generateHarvestPlan() {
+  const cl = getClient();
+  const remainingExemption = Math.max(0, LTCG_LIMIT - cl.ltcg);
+
+  // Step 1: Identify equity funds with LTCG (holding > 1 year, positive gain)
+  const equityLTCGFunds = [];
+  funds.forEach((f, i) => {
+    if (!EQUITY_CATS.includes(f.category)) return;
+    const yrs = holdingYears(f.purchaseDate);
+    if (yrs < 1) return;
+    const gain = f.current - f.invested;
+    if (gain <= 0) return;
+    equityLTCGFunds.push({ ...f, idx: i, gain, yrs });
+  });
+  equityLTCGFunds.sort((a, b) => b.gain - a.gain);
+
+  // Step 2: Greedily fill exemption
+  let filled = 0;
+  const harvestPlan = [];
+  for (const f of equityLTCGFunds) {
+    if (filled >= remainingExemption) break;
+    const amountNeeded = Math.min(f.gain, remainingExemption - filled);
+    const fraction = amountNeeded / f.gain;
+
+    // Calculate exact units to sell
+    const fUnits = f.units || 0;
+    const fNAV = f.nav || (fUnits > 0 ? f.current / fUnits : 0);
+    const exactUnits = fUnits > 0 ? (fraction * fUnits) : 0;
+    const sellValue = exactUnits > 0 ? exactUnits * fNAV : fraction * f.current;
+    const costBasis = fraction * f.invested;
+
+    let unitsToSellLabel = '';
+    if (exactUnits > 0) {
+      unitsToSellLabel = exactUnits.toFixed(3) + ' units';
+    } else {
+      unitsToSellLabel = (fraction * 100).toFixed(1) + '% of holding';
+    }
+
+    // Extract AMC name (first word of fund name usually)
+    const amcName = f.name.split(' ')[0];
+    const catLabel = getCatLabel(f.category);
+    let action = 'Switch / Rebuy';
+    let switchTo = catLabel + ' fund (' + amcName + ' or better)';
+
+    harvestPlan.push({
+      name: f.name,
+      category: getCatLabel(f.category),
+      ltcgToHarvest: amountNeeded,
+      unitsToSell: unitsToSellLabel,
+      fraction: fraction,
+      totalGain: f.gain,
+      invested: f.invested,
+      current: f.current,
+      action: action,
+      switchTo: switchTo,
+      totalUnits: fUnits,
+      nav: fNAV,
+      exactUnits: exactUnits,
+      sellValue: sellValue,
+      costBasis: costBasis,
+      pctOfHolding: (fraction * 100).toFixed(1),
+    });
+    filled += amountNeeded;
+  }
+
+  // Step 3: Loss harvesting opportunities
+  const lossFunds = [];
+  funds.forEach((f, i) => {
+    const gain = f.current - f.invested;
+    if (gain < 0) {
+      lossFunds.push({ name: f.name, category: getCatLabel(f.category), loss: Math.abs(gain), invested: f.invested, current: f.current });
+    }
+  });
+
+  // Step 4: Reinvestment suggestions based on risk profile & age
+  const age = parseInt(cl.age) || 35;
+  const risk = (cl.risk || '').toLowerCase();
+  let riskBucket = 'moderate';
+  if (risk.includes('conservative')) riskBucket = 'conservative';
+  else if (risk.includes('aggressive') && !risk.includes('moderate')) riskBucket = 'aggressive';
+
+  // Age override: if age > 55 and not explicitly aggressive, suggest conservative
+  if (age > 55 && riskBucket === 'aggressive') riskBucket = 'moderate';
+  if (age > 65) riskBucket = 'conservative';
+
+  const taxSaved = Math.round(filled * 0.125);
+  const totalHarvested = filled;
+
+  // Step 5: Build the UI
+  const container = document.getElementById('harvest-plan-container');
+  container.style.display = 'block';
+
+  const clientName = cl.name || 'Client';
+  const today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+
+  let html = '<div style="border:3px solid var(--navy);border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.12)">';
+
+  // ══════ HEADER ══════
+  html += '<div style="background:linear-gradient(135deg,#0f2b46,#1B3A6B);padding:20px 24px;cursor:pointer" onclick="toggleHarvestPlan()">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center">'
+    +'<div>'
+    +'<div style="font-size:9px;color:rgba(255,255,255,.35);font-family:monospace;margin-bottom:4px">MERASIP · TRUSTNER ASSET SERVICES · ARN-286886</div>'
+    +'<div style="font-size:20px;font-weight:900;color:#fff;letter-spacing:.5px">🎯 S.M.A.R.T Tax Harvest Plan</div>'
+    +'<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">'+escH(clientName)+' · FY 2025-26 · '+today+'</div>'
+    +'</div>'
+    +'<span id="harvest-toggle-icon" style="color:#86EFAC;font-size:22px;font-weight:900">▼</span>'
+    +'</div>'
+    // Summary cards
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px">'
+    +[
+      [inr(LTCG_LIMIT),'LTCG EXEMPTION LIMIT','#86EFAC',''],
+      [inr(cl.ltcg),'ALREADY REALISED','#FCD34D',''],
+      [inr(remainingExemption),'ROOM LEFT','#86EFAC',''],
+      [inr(taxSaved),'TAX SAVED @12.5%','#86EFAC','border:2px solid rgba(134,239,172,.4);background:rgba(134,239,172,.1)'],
+    ].map(([v,l,c,extra])=>'<div style="background:rgba(255,255,255,.07);border-radius:10px;padding:12px 14px;text-align:center;'+extra+'"><div style="font-size:20px;font-weight:900;color:'+c+'">'+v+'</div><div style="font-size:8px;color:rgba(255,255,255,.4);margin-top:4px;letter-spacing:.5px;font-weight:700">'+l+'</div></div>').join('')
+    +'</div></div>';
+
+  // ══════ COLLAPSIBLE BODY ══════
+  html += '<div id="harvest-plan-body" style="background:#fff;padding:20px 24px">';
+
+  // ══════ HARVEST TABLE ══════
+  if (harvestPlan.length > 0) {
+    html += '<div style="margin-bottom:20px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:16px">💰</span><span style="font-size:13px;font-weight:900;color:var(--navy)">Step 1: Harvest These Funds (LTCG Tax-Free under ₹1.25L Exemption)</span></div>'
+      +'<div style="overflow-x:auto;border-radius:10px;border:2px solid #e2e8f0">'
+      +'<table style="width:100%;border-collapse:collapse;font-size:11px">'
+      +'<thead><tr style="background:linear-gradient(135deg,#0f2b46,#1B3A6B);color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:.5px">'
+      +'<th style="padding:10px 10px;text-align:left;font-weight:800">Fund Name</th>'
+      +'<th style="padding:10px 6px;text-align:right;font-weight:800">Total<br>Units</th>'
+      +'<th style="padding:10px 6px;text-align:right;font-weight:800">NAV<br>(₹)</th>'
+      +'<th style="padding:10px 6px;text-align:right;font-weight:800">Total<br>Gain</th>'
+      +'<th style="padding:10px 6px;text-align:right;font-weight:800">LTCG to<br>Harvest</th>'
+      +'<th style="padding:10px 6px;text-align:right;font-weight:800;color:#86EFAC">Units to<br>Sell</th>'
+      +'<th style="padding:10px 6px;text-align:right;font-weight:800">Sell<br>Value</th>'
+      +'<th style="padding:10px 6px;text-align:center;font-weight:800">Action</th>'
+      +'<th style="padding:10px 6px;text-align:left;font-weight:800">Reinvest In</th>'
+      +'</tr></thead><tbody>';
+
+    let totalSellValue = 0;
+    harvestPlan.forEach((p,i) => {
+      totalSellValue += p.sellValue;
+      const hasUnits = p.exactUnits > 0;
+      html += '<tr style="border-bottom:1px solid #f0f0f0;background:'+(i%2?'#f8fafc':'#fff')+'">'
+        +'<td style="padding:10px 10px;max-width:180px"><div style="font-weight:700;color:var(--navy);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+escH(p.name)+'">'+escH(p.name)+'</div><div style="font-size:9px;color:#94a3b8;margin-top:1px">'+escH(p.category)+'</div></td>'
+        +'<td style="padding:10px 6px;text-align:right;font-size:11px;color:#64748b;font-weight:600">'+(hasUnits ? p.totalUnits.toFixed(3) : '—')+'</td>'
+        +'<td style="padding:10px 6px;text-align:right;font-size:11px;color:#64748b;font-weight:600">'+(p.nav > 0 ? '₹'+p.nav.toFixed(2) : '—')+'</td>'
+        +'<td style="padding:10px 6px;text-align:right;color:#64748b;font-weight:600">'+inr(p.totalGain)+'</td>'
+        +'<td style="padding:10px 6px;text-align:right;font-weight:900;font-size:13px;color:#16a34a">'+inr(p.ltcgToHarvest)+'</td>'
+        +'<td style="padding:10px 6px;text-align:right;font-weight:900;font-size:12px;color:#1B3A6B;background:#e8eef820">'
+          +(hasUnits
+            ? '<div>'+p.exactUnits.toFixed(3)+'</div><div style="font-size:8px;color:#94a3b8;font-weight:600">'+p.pctOfHolding+'% of holding</div>'
+            : p.pctOfHolding+'%')
+        +'</td>'
+        +'<td style="padding:10px 6px;text-align:right;font-weight:700;color:var(--navy)">'+inr(p.sellValue)+'</td>'
+        +'<td style="padding:10px 6px;text-align:center"><span style="display:inline-block;padding:4px 8px;border-radius:6px;font-size:9px;font-weight:800;background:#d1fae5;color:#065f46">🔄 Switch / Rebuy</span></td>'
+        +'<td style="padding:10px 6px;font-weight:700;color:var(--navy);font-size:10px">'+escH(p.switchTo)+'</td>'
+        +'</tr>';
+    });
+
+    // TOTAL ROW
+    html += '<tr style="background:linear-gradient(135deg,#0f2b46,#1B3A6B);color:#fff;font-weight:900;font-size:11px">'
+      +'<td style="padding:12px 10px" colspan="4">TOTAL HARVEST ('+harvestPlan.length+' funds)</td>'
+      +'<td style="padding:12px 6px;text-align:right;color:#86EFAC;font-size:15px">'+inr(totalHarvested)+'</td>'
+      +'<td style="padding:12px 6px;text-align:right;color:#86EFAC;font-size:11px" colspan="1">'+(harvestPlan.some(p=>p.exactUnits>0)?harvestPlan.reduce((s,p)=>s+(p.exactUnits>0?p.exactUnits.toFixed(3)+' ':''),''). trim():'')+'</td>'
+      +'<td style="padding:12px 6px;text-align:right;color:#FCD34D">'+inr(totalSellValue)+'</td>'
+      +'<td style="padding:12px 6px;text-align:center;color:#86EFAC" colspan="2">TAX = ₹0 · Saved: '+inr(taxSaved)+' ✅</td>'
+      +'</tr>'
+      +'</tbody></table></div></div>';
+  } else {
+    html += '<div style="background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:16px;margin-bottom:20px;text-align:center;color:#065f46;font-size:13px;font-weight:700">'
+      +(remainingExemption<=0?'✅ LTCG exemption fully utilised for FY 2025-26. No harvesting needed.':'No equity funds with LTCG available for harvesting.')
+      +'</div>';
+  }
+
+  // ══════ LOSS HARVEST ══════
+  if (lossFunds.length > 0) {
+    html += '<div style="margin-bottom:20px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:16px">📉</span><span style="font-size:13px;font-weight:900;color:#dc2626">Step 2: Loss Harvesting Opportunities</span></div>'
+      +'<div style="overflow-x:auto;border-radius:10px;border:2px solid #fecaca">'
+      +'<table style="width:100%;border-collapse:collapse;font-size:11px">'
+      +'<thead><tr style="background:#fef2f2;color:#991b1b;font-size:10px;text-transform:uppercase;letter-spacing:.5px">'
+      +'<th style="padding:10px 12px;text-align:left;font-weight:800">Fund</th>'
+      +'<th style="padding:10px 8px;text-align:left;font-weight:800">Category</th>'
+      +'<th style="padding:10px 8px;text-align:right;font-weight:800">Loss Amount</th>'
+      +'<th style="padding:10px 8px;text-align:right;font-weight:800">Invested</th>'
+      +'<th style="padding:10px 8px;text-align:right;font-weight:800">Current Value</th>'
+      +'<th style="padding:10px 8px;text-align:left;font-weight:800">Suggestion</th>'
+      +'</tr></thead><tbody>';
+    lossFunds.forEach((lf,i) => {
+      html += '<tr style="border-bottom:1px solid #fecaca;background:'+(i%2?'#fff5f5':'#fff')+'">'
+        +'<td style="padding:10px 12px;font-weight:700;color:#991b1b">'+escH(lf.name)+'</td>'
+        +'<td style="padding:10px 8px;color:#64748b;font-weight:600">'+escH(lf.category)+'</td>'
+        +'<td style="padding:10px 8px;text-align:right;font-weight:900;color:#dc2626;font-size:13px">-'+inr(lf.loss)+'</td>'
+        +'<td style="padding:10px 8px;text-align:right">'+inr(lf.invested)+'</td>'
+        +'<td style="padding:10px 8px;text-align:right">'+inr(lf.current)+'</td>'
+        +'<td style="padding:10px 8px;font-weight:700;color:#dc2626">📌 Book loss to offset gains. Switch to better fund.</td>'
+        +'</tr>';
+    });
+    html += '</tbody></table></div></div>';
+  }
+
+  // ══════ REINVESTMENT SUGGESTIONS ══════
+  html += '<div style="margin-bottom:20px">'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:16px">💡</span><span style="font-size:13px;font-weight:900;color:var(--navy)">Step 3: Reinvestment Suggestions (by Risk Profile, Age '+((cl.age||'—'))+')</span></div>'
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">';
+
+  const profiles = [
+    {key:'conservative',label:'Conservative',icon:'🛡️',gradient:'linear-gradient(135deg,#065f46,#10b981)',border:'#10b981'},
+    {key:'moderate',label:'Moderate',icon:'⚖️',gradient:'linear-gradient(135deg,#1e40af,#3b82f6)',border:'#3b82f6'},
+    {key:'aggressive',label:'Aggressive',icon:'🚀',gradient:'linear-gradient(135deg,#991b1b,#ef4444)',border:'#ef4444'},
+  ];
+
+  profiles.forEach(prof => {
+    const isActive = prof.key === riskBucket;
+    html += '<div style="border-radius:12px;overflow:hidden;border:2px solid '+(isActive?prof.border:'#e2e8f0')+';'+(isActive?'box-shadow:0 4px 12px rgba(0,0,0,.15);transform:scale(1.02)':'opacity:.85')+'">'
+      +'<div style="background:'+(isActive?prof.gradient:'#f1f5f9')+';padding:10px 14px;color:'+(isActive?'#fff':'#64748b')+';font-size:12px;font-weight:900;text-align:center">'
+      +prof.icon+' '+prof.label.toUpperCase()+(isActive?' ← RECOMMENDED':'')+'</div>';
+
+    html += '<table data-reinvest-profile="'+prof.key+'" style="width:100%;border-collapse:collapse;font-size:10px;background:#fff">'
+      +'<thead><tr style="background:#f8fafc"><th style="padding:6px 10px;text-align:left;font-weight:800;color:#64748b">Fund</th><th style="padding:6px 8px;text-align:left;font-weight:800;color:#64748b">Category</th><th style="padding:6px 8px;text-align:left;font-weight:800;color:#64748b">Return</th></tr></thead><tbody>';
+    REINVEST_SUGGESTIONS[prof.key].forEach((s,si) => {
+      const isCustom = s.why && s.why.includes('Custom');
+      html += '<tr style="border-bottom:1px solid #f0f0f0;'+(isCustom?'background:#eff6ff':'')+'">'
+        +'<td style="padding:8px 10px"><div style="font-weight:700;color:var(--navy);font-size:11px">'+escH(s.name)+(isCustom?' <span style="font-size:8px;color:#3b82f6;font-weight:800">★ YOURS</span>':'')+'</div><div style="font-size:9px;color:#94a3b8;margin-top:2px;line-height:1.4">'+escH(s.why)+'</div></td>'
+        +'<td style="padding:8px;font-size:10px;color:#64748b;font-weight:600">'+escH(s.cat)+'</td>'
+        +'<td style="padding:8px;font-size:11px;color:#16a34a;font-weight:800">'+escH(s.ret)+'</td>'
+        +'</tr>';
+    });
+    html += '</tbody></table></div>';
+  });
+  html += '</div></div>';
+
+  // ══════ CUSTOM FUND TESTER ══════
+  html += '<div style="margin-bottom:18px">'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:16px">🔍</span><span style="font-size:13px;font-weight:900;color:var(--navy)">Test Your Own Fund</span></div>'
+    +'<div style="background:#fff;border:2px solid var(--border);border-radius:12px;padding:16px 18px">'
+    +'<div style="font-size:11px;color:#64748b;margin-bottom:10px">Start typing a fund name — it will auto-suggest and fill category & return for you</div>'
+    +'<div style="display:flex;gap:8px;align-items:stretch;flex-wrap:wrap">'
+    +'<div style="flex:1;min-width:220px;position:relative"><input type="text" id="custom-fund-name" placeholder="🔍 Type fund name... e.g. HDFC, Quant, Nippon" autocomplete="off" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;transition:border-color .15s" onfocus="this.style.borderColor=\'#1B3A6B\';this.style.boxShadow=\'0 0 0 3px rgba(27,58,107,.1)\'" onblur="this.style.borderColor=\'#D1D5DB\';this.style.boxShadow=\'none\'"></div>'
+    +'<input type="text" id="custom-fund-cat" placeholder="Category" value="Flexi Cap" style="width:120px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px">'
+    +'<input type="text" id="custom-fund-ret" placeholder="Return" value="18% 5Y" style="width:90px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px">'
+    +'<select id="custom-fund-risk" style="width:120px;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px"><option value="conservative">Conservative</option><option value="moderate" selected>Moderate</option><option value="aggressive">Aggressive</option></select>'
+    +'<button class="btn btn-primary" onclick="addCustomFund()" style="padding:8px 16px;font-size:12px">+ Add</button>'
+    +'</div>'
+    +'<div id="custom-fund-list" style="margin-top:10px"></div>'
+    +'</div></div>';
+
+  // ══════ EXECUTION STEPS ══════
+  html += '<div style="margin-bottom:8px">'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:16px">📋</span><span style="font-size:13px;font-weight:900;color:var(--navy)">Execution Steps</span></div>'
+    +'<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:12px;padding:18px 22px;border:2px solid #bae6fd">';
+
+  if (harvestPlan.length > 0) {
+    const steps = [];
+    steps.push('Log in to AMC portal / MF Central / MFU for each fund house');
+    steps.push('<strong>Redeem these exact units</strong> to book tax-free LTCG:<br>'+harvestPlan.map(p=>{
+      const shortName = escH(p.name.split(' ').slice(0,4).join(' '));
+      if(p.exactUnits > 0) {
+        return '&nbsp;&nbsp;→ <strong>'+shortName+'</strong>: Sell <strong>'+p.exactUnits.toFixed(3)+' units</strong> ('+p.pctOfHolding+'%) ≈ '+inr(p.sellValue)+' → LTCG '+inr(p.ltcgToHarvest)+' (tax-free)';
+      }
+      return '&nbsp;&nbsp;→ <strong>'+shortName+'</strong>: Sell '+p.pctOfHolding+'% of holding → LTCG '+inr(p.ltcgToHarvest)+' (tax-free)';
+    }).join('<br>'));
+    steps.push('<strong>Reinvest</strong> within 1-2 business days — switch within same AMC to a better fund, or rebuy the same fund if it\'s already the best in its category');
+    if (lossFunds.length > 0) {
+      steps.push('<strong>Book losses</strong> in: '+lossFunds.map(lf=>escH(lf.name.split(' ').slice(0,4).join(' '))).join(', ')+' — offset against taxable gains');
+    }
+    steps.push('⚠️ <strong>Complete before March 31, 2026</strong> to utilise FY 2025-26 LTCG exemption');
+    steps.push('Keep redemption confirmations for <strong>ITR filing</strong>');
+
+    html += '<div style="display:flex;flex-direction:column;gap:10px">';
+    steps.forEach((s,i) => {
+      html += '<div style="display:flex;gap:10px;align-items:flex-start">'
+        +'<div style="min-width:28px;height:28px;background:var(--navy);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900">'+(i+1)+'</div>'
+        +'<div style="font-size:12px;color:#1e293b;line-height:1.7;padding-top:4px">'+s+'</div>'
+        +'</div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div style="text-align:center;color:#64748b;font-size:12px">No harvesting actions required at this time.'+(remainingExemption<=0?' Revisit after April 1 for FY 2026-27.':'')+'</div>';
+  }
+
+  html += '</div></div>';
+
+  // ══════ DISCLAIMER ══════
+  html += '<div style="font-size:9px;color:#94a3b8;line-height:1.6;padding:10px 0;border-top:1px solid #e2e8f0;margin-top:8px">'
+    +'⚠️ All calculations are based on current applicable tax laws (Income Tax Act, 1961). Users are advised to consult a tax professional for final decisions. '
+    +'Past performance does not guarantee future returns. Mutual fund investments are subject to market risk.</div>';
+
+  html += '</div></div>'; // close harvest-plan-body and outer card
+
+  container.innerHTML = html;
+  // Autocomplete uses event delegation — no init needed
+}
+
+function toggleHarvestPlan() {
+  const body = document.getElementById('harvest-plan-body');
+  const icon = document.getElementById('harvest-toggle-icon');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    icon.innerHTML = '&#9660;';
+  } else {
+    body.style.display = 'none';
+    icon.innerHTML = '&#9654;';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// FUND DATABASE FOR AUTOCOMPLETE
+// ═══════════════════════════════════════════════
+const FUND_DB = [
+  // Large Cap
+  {n:'ICICI Prudential Bluechip Fund',c:'Large Cap',r:'16.2% 5Y'},{n:'Mirae Asset Large Cap Fund',c:'Large Cap',r:'15.8% 5Y'},
+  {n:'Axis Bluechip Fund',c:'Large Cap',r:'13.1% 5Y'},{n:'SBI Blue Chip Fund',c:'Large Cap',r:'14.9% 5Y'},
+  {n:'HDFC Top 100 Fund',c:'Large Cap',r:'15.3% 5Y'},{n:'Nippon India Large Cap Fund',c:'Large Cap',r:'17.5% 5Y'},
+  {n:'Kotak Bluechip Fund',c:'Large Cap',r:'15.7% 5Y'},{n:'Canara Robeco Bluechip Equity Fund',c:'Large Cap',r:'15.1% 5Y'},
+  {n:'UTI Mastershare Fund',c:'Large Cap',r:'14.4% 5Y'},{n:'Bandhan Large Cap Fund',c:'Large Cap',r:'13.8% 5Y'},
+  {n:'Baroda BNP Paribas Large Cap Fund',c:'Large Cap',r:'16.1% 5Y'},{n:'Edelweiss Large Cap Fund',c:'Large Cap',r:'15.4% 5Y'},
+  {n:'PGIM India Large Cap Fund',c:'Large Cap',r:'12.1% 5Y'},{n:'Tata Large Cap Fund',c:'Large Cap',r:'14.6% 5Y'},
+  {n:'DSP Top 100 Equity Fund',c:'Large Cap',r:'13.5% 5Y'},{n:'Invesco India Largecap Fund',c:'Large Cap',r:'15.2% 5Y'},
+  // Flexi Cap
+  {n:'Parag Parikh Flexi Cap Fund',c:'Flexi Cap',r:'19.8% 5Y'},{n:'HDFC Flexi Cap Fund',c:'Flexi Cap',r:'20.5% 5Y'},
+  {n:'Quant Flexi Cap Fund',c:'Flexi Cap',r:'28.2% 5Y'},{n:'PGIM India Flexi Cap Fund',c:'Flexi Cap',r:'16.3% 5Y'},
+  {n:'UTI Flexi Cap Fund',c:'Flexi Cap',r:'15.9% 5Y'},{n:'Kotak Flexi Cap Fund',c:'Flexi Cap',r:'16.5% 5Y'},
+  {n:'SBI Flexi Cap Fund',c:'Flexi Cap',r:'13.9% 5Y'},{n:'DSP Flexi Cap Fund',c:'Flexi Cap',r:'17.8% 5Y'},
+  {n:'Canara Robeco Flexi Cap Fund',c:'Flexi Cap',r:'15.4% 5Y'},{n:'Motilal Oswal Flexi Cap Fund',c:'Flexi Cap',r:'16.9% 5Y'},
+  {n:'Axis Flexi Cap Fund',c:'Flexi Cap',r:'12.8% 5Y'},{n:'Franklin India Flexi Cap Fund',c:'Flexi Cap',r:'17.2% 5Y'},
+  {n:'ICICI Prudential Flexi Cap Fund',c:'Flexi Cap',r:'14.8% 5Y'},
+  // Mid Cap
+  {n:'HDFC Mid-Cap Opportunities Fund',c:'Mid Cap',r:'22.8% 5Y'},{n:'Kotak Emerging Equity Fund',c:'Mid Cap',r:'22.1% 5Y'},
+  {n:'Axis Midcap Fund',c:'Mid Cap',r:'18.3% 5Y'},{n:'DSP Midcap Fund',c:'Mid Cap',r:'19.5% 5Y'},
+  {n:'SBI Magnum Midcap Fund',c:'Mid Cap',r:'19.1% 5Y'},{n:'Nippon India Growth Fund',c:'Mid Cap',r:'22.6% 5Y'},
+  {n:'Motilal Oswal Midcap Fund',c:'Mid Cap',r:'34.5% 5Y'},{n:'Edelweiss Mid Cap Fund',c:'Mid Cap',r:'23.9% 5Y'},
+  {n:'Invesco India Mid Cap Fund',c:'Mid Cap',r:'19.8% 5Y'},{n:'Quant Mid Cap Fund',c:'Mid Cap',r:'25.1% 5Y'},
+  {n:'PGIM India Midcap Opportunities Fund',c:'Mid Cap',r:'17.4% 5Y'},{n:'Mahindra Manulife Mid Cap Fund',c:'Mid Cap',r:'24.5% 3Y'},
+  {n:'Tata Mid Cap Growth Fund',c:'Mid Cap',r:'20.1% 5Y'},{n:'UTI Mid Cap Fund',c:'Mid Cap',r:'19.9% 5Y'},
+  {n:'Baroda BNP Paribas Mid Cap Fund',c:'Mid Cap',r:'21.2% 5Y'},{n:'Sundaram Mid Cap Fund',c:'Mid Cap',r:'20.7% 5Y'},
+  // Small Cap
+  {n:'Nippon India Small Cap Fund',c:'Small Cap',r:'25.2% 5Y'},{n:'Quant Small Cap Fund',c:'Small Cap',r:'30.1% 5Y'},
+  {n:'HDFC Small Cap Fund',c:'Small Cap',r:'22.1% 5Y'},{n:'SBI Small Cap Fund',c:'Small Cap',r:'21.3% 5Y'},
+  {n:'Axis Small Cap Fund',c:'Small Cap',r:'21.8% 5Y'},{n:'Kotak Small Cap Fund',c:'Small Cap',r:'22.7% 5Y'},
+  {n:'DSP Small Cap Fund',c:'Small Cap',r:'21.5% 5Y'},{n:'Canara Robeco Small Cap Fund',c:'Small Cap',r:'22.9% 5Y'},
+  {n:'Bandhan Small Cap Fund',c:'Small Cap',r:'24.1% 5Y'},{n:'ICICI Prudential Smallcap Fund',c:'Small Cap',r:'22.3% 5Y'},
+  {n:'Edelweiss Small Cap Fund',c:'Small Cap',r:'25.7% 5Y'},{n:'Franklin India Smaller Companies Fund',c:'Small Cap',r:'23.5% 5Y'},
+  {n:'Tata Small Cap Fund',c:'Small Cap',r:'21.9% 5Y'},{n:'PGIM India Small Cap Fund',c:'Small Cap',r:'16.4% 5Y'},
+  {n:'Invesco India Smallcap Fund',c:'Small Cap',r:'20.4% 5Y'},{n:'Motilal Oswal Small Cap Fund',c:'Small Cap',r:'22.4% 3Y'},
+  // Multi Cap
+  {n:'Kotak Multicap Fund',c:'Multi Cap',r:'24.6% 3Y'},{n:'HDFC Multi Cap Fund',c:'Multi Cap',r:'20.8% 3Y'},
+  {n:'Nippon India Multi Cap Fund',c:'Multi Cap',r:'21.9% 5Y'},{n:'ICICI Prudential Multicap Fund',c:'Multi Cap',r:'19.5% 5Y'},
+  {n:'Quant Active Fund',c:'Multi Cap',r:'26.3% 5Y'},{n:'Baroda BNP Paribas Multi Cap Fund',c:'Multi Cap',r:'22.1% 3Y'},
+  {n:'Invesco India Multicap Fund',c:'Multi Cap',r:'18.3% 5Y'},{n:'Axis Multicap Fund',c:'Multi Cap',r:'15.8% 3Y'},
+  {n:'Sundaram Multi Cap Fund',c:'Multi Cap',r:'18.7% 5Y'},{n:'Aditya Birla Sun Life Multi Cap Fund',c:'Multi Cap',r:'17.2% 3Y'},
+  // Large & Mid Cap
+  {n:'Mirae Asset Emerging Bluechip Fund',c:'Large & Mid Cap',r:'21.2% 5Y'},{n:'Kotak Equity Opportunities Fund',c:'Large & Mid Cap',r:'19.5% 5Y'},
+  {n:'SBI Large & Midcap Fund',c:'Large & Mid Cap',r:'17.9% 5Y'},{n:'HDFC Large and Mid Cap Fund',c:'Large & Mid Cap',r:'18.8% 5Y'},
+  {n:'Canara Robeco Emerging Equities Fund',c:'Large & Mid Cap',r:'18.1% 5Y'},{n:'Tata Large & Mid Cap Fund',c:'Large & Mid Cap',r:'17.6% 5Y'},
+  {n:'DSP Equity Opportunities Fund',c:'Large & Mid Cap',r:'18.3% 5Y'},{n:'Axis Growth Opportunities Fund',c:'Large & Mid Cap',r:'16.4% 5Y'},
+  // Multi Asset
+  {n:'ICICI Prudential Multi Asset Fund',c:'Multi Asset',r:'20.1% 5Y'},{n:'HDFC Multi Asset Fund',c:'Multi Asset',r:'18.7% 3Y'},
+  {n:'Quant Multi Asset Fund',c:'Multi Asset',r:'25.3% 5Y'},{n:'SBI Multi Asset Allocation Fund',c:'Multi Asset',r:'16.2% 5Y'},
+  {n:'Nippon India Multi Asset Allocation Fund',c:'Multi Asset',r:'17.1% 3Y'},{n:'Tata Multi Asset Opportunities Fund',c:'Multi Asset',r:'16.8% 3Y'},
+  {n:'Axis Multi Asset Allocation Fund',c:'Multi Asset',r:'14.3% 3Y'},{n:'UTI Multi Asset Allocation Fund',c:'Multi Asset',r:'15.2% 3Y'},
+  // Aggressive Hybrid
+  {n:'ICICI Prudential Equity & Debt Fund',c:'Aggressive Hybrid',r:'18.9% 5Y'},{n:'Kotak Equity Hybrid Fund',c:'Aggressive Hybrid',r:'16.5% 5Y'},
+  {n:'SBI Equity Hybrid Fund',c:'Aggressive Hybrid',r:'15.2% 5Y'},{n:'Canara Robeco Equity Hybrid Fund',c:'Aggressive Hybrid',r:'16.1% 5Y'},
+  {n:'Axis Aggressive Hybrid Fund',c:'Aggressive Hybrid',r:'9.3% 5Y'},{n:'DSP Equity & Bond Fund',c:'Aggressive Hybrid',r:'15.9% 5Y'},
+  {n:'Mirae Asset Hybrid Equity Fund',c:'Aggressive Hybrid',r:'16.3% 5Y'},
+  // BAF / Dynamic
+  {n:'HDFC Balanced Advantage Fund',c:'BAF',r:'17.1% 5Y'},{n:'ICICI Prudential Balanced Advantage Fund',c:'BAF',r:'13.8% 5Y'},
+  {n:'Kotak Balanced Advantage Fund',c:'BAF',r:'12.7% 5Y'},{n:'Edelweiss Balanced Advantage Fund',c:'BAF',r:'14.8% 5Y'},
+  {n:'Nippon India Balanced Advantage Fund',c:'BAF',r:'13.2% 5Y'},{n:'Axis Balanced Advantage Fund',c:'BAF',r:'11.9% 5Y'},
+  {n:'Tata Balanced Advantage Fund',c:'BAF',r:'14.5% 5Y'},
+  // ELSS
+  {n:'Quant ELSS Tax Saver Fund',c:'ELSS',r:'28.5% 5Y'},{n:'Mirae Asset ELSS Tax Saver Fund',c:'ELSS',r:'18.2% 5Y'},
+  {n:'SBI Long Term Equity Fund',c:'ELSS',r:'14.9% 5Y'},{n:'HDFC ELSS Tax Saver Fund',c:'ELSS',r:'16.7% 5Y'},
+  {n:'DSP ELSS Tax Saver Fund',c:'ELSS',r:'17.1% 5Y'},{n:'Axis ELSS Tax Saver Fund',c:'ELSS',r:'12.1% 5Y'},
+  {n:'Kotak ELSS Tax Saver Fund',c:'ELSS',r:'17.3% 5Y'},{n:'Motilal Oswal ELSS Tax Saver Fund',c:'ELSS',r:'22.8% 5Y'},
+  // Sectoral / Thematic
+  {n:'ICICI Prudential Technology Fund',c:'Sector/Thematic',r:'18.5% 5Y'},{n:'SBI Technology Opportunities Fund',c:'Sector/Thematic',r:'17.9% 5Y'},
+  {n:'Nippon India Power & Infra Fund',c:'Sector/Thematic',r:'24.8% 5Y'},{n:'ICICI Prudential Infrastructure Fund',c:'Sector/Thematic',r:'25.1% 5Y'},
+  {n:'DSP Healthcare Fund',c:'Sector/Thematic',r:'19.3% 5Y'},{n:'Nippon India Pharma Fund',c:'Sector/Thematic',r:'18.7% 5Y'},
+  {n:'SBI PSU Fund',c:'Sector/Thematic',r:'28.3% 5Y'},{n:'ICICI Prudential Banking & Financial Services Fund',c:'Sector/Thematic',r:'16.8% 5Y'},
+  {n:'Tata Digital India Fund',c:'Sector/Thematic',r:'17.8% 5Y'},{n:'UTI Transportation & Logistics Fund',c:'Sector/Thematic',r:'23.4% 5Y'},
+  {n:'Aditya Birla Sun Life PSU Equity Fund',c:'Sector/Thematic',r:'30.1% 5Y'},{n:'Invesco India PSU Equity Fund',c:'Sector/Thematic',r:'29.8% 5Y'},
+  {n:'Quant Infrastructure Fund',c:'Sector/Thematic',r:'31.2% 5Y'},{n:'HDFC Defence Fund',c:'Sector/Thematic',r:'—'},
+  {n:'Motilal Oswal Manufacturing Fund',c:'Sector/Thematic',r:'—'},{n:'Bandhan Infrastructure Fund',c:'Sector/Thematic',r:'22.1% 5Y'},
+  // Value / Contra
+  {n:'ICICI Prudential Value Discovery Fund',c:'Value',r:'19.5% 5Y'},{n:'Nippon India Value Fund',c:'Value',r:'18.1% 5Y'},
+  {n:'HDFC Capital Builder Value Fund',c:'Value',r:'16.2% 5Y'},{n:'Kotak India EQ Contra Fund',c:'Value',r:'18.9% 5Y'},
+  {n:'SBI Contra Fund',c:'Value',r:'20.8% 5Y'},{n:'Invesco India Contra Fund',c:'Value',r:'18.3% 5Y'},
+  // Index Funds
+  {n:'UTI Nifty 50 Index Fund',c:'Index',r:'14.3% 5Y'},{n:'HDFC Index Fund - Nifty 50',c:'Index',r:'14.2% 5Y'},
+  {n:'ICICI Prudential Nifty 50 Index Fund',c:'Index',r:'14.3% 5Y'},{n:'SBI Nifty Index Fund',c:'Index',r:'14.1% 5Y'},
+  {n:'Motilal Oswal Nifty 500 Index Fund',c:'Index',r:'—'},{n:'Navi Nifty 50 Index Fund',c:'Index',r:'14.4% 5Y'},
+  {n:'UTI Nifty Next 50 Index Fund',c:'Index',r:'18.5% 5Y'},{n:'Motilal Oswal Nifty Midcap 150 Index Fund',c:'Index',r:'23.1% 3Y'},
+  {n:'Motilal Oswal Nifty Smallcap 250 Index Fund',c:'Index',r:'—'},{n:'HDFC Index Fund - BSE Sensex',c:'Index',r:'14.5% 5Y'},
+  // International / FOF
+  {n:'Motilal Oswal Nasdaq 100 FOF',c:'International/FOF',r:'19.1% 5Y'},{n:'PGIM India Global Equity Opportunities Fund',c:'International/FOF',r:'10.2% 5Y'},
+  {n:'Franklin India Feeder - US Opportunities Fund',c:'International/FOF',r:'14.5% 5Y'},{n:'DSP Global Innovation Fund of Fund',c:'International/FOF',r:'8.7% 3Y'},
+  {n:'Kotak NASDAQ 100 Fund of Fund',c:'International/FOF',r:'—'},{n:'Edelweiss US Technology Equity FOF',c:'International/FOF',r:'16.3% 5Y'},
+  {n:'ICICI Prudential US Bluechip Equity Fund',c:'International/FOF',r:'13.2% 5Y'},
+  // Focused
+  {n:'Axis Focused 25 Fund',c:'Focused',r:'12.8% 5Y'},{n:'SBI Focused Equity Fund',c:'Focused',r:'15.1% 5Y'},
+  {n:'HDFC Focused 30 Fund',c:'Focused',r:'15.9% 5Y'},{n:'Nippon India Focused Equity Fund',c:'Focused',r:'13.7% 5Y'},
+  {n:'Motilal Oswal Focused Fund',c:'Focused',r:'14.2% 5Y'},{n:'Quant Focused Fund',c:'Focused',r:'21.8% 5Y'},
+  // Whiteoak
+  {n:'WhiteOak Capital Flexi Cap Fund',c:'Flexi Cap',r:'20.5% 3Y'},{n:'WhiteOak Capital Large Cap Fund',c:'Large Cap',r:'18.1% 3Y'},
+  {n:'WhiteOak Capital Mid Cap Fund',c:'Mid Cap',r:'22.4% 3Y'},{n:'WhiteOak Capital Multi Cap Fund',c:'Multi Cap',r:'—'},
+  {n:'WhiteOak Capital Large & Mid Cap Fund',c:'Large & Mid Cap',r:'19.7% 3Y'},{n:'WhiteOak Capital Small Cap Fund',c:'Small Cap',r:'—'},
+  {n:'WhiteOak Capital ELSS Tax Saver Fund',c:'ELSS',r:'19.8% 3Y'},{n:'WhiteOak Capital Balanced Hybrid Fund',c:'Aggressive Hybrid',r:'—'},
+  {n:'WhiteOak Capital Multi Asset Allocation Fund',c:'Multi Asset',r:'—'},{n:'WhiteOak Capital Focused Equity Fund',c:'Focused',r:'—'},
+  // JM Financial
+  {n:'JM Flexicap Fund',c:'Flexi Cap',r:'24.8% 5Y'},{n:'JM Large Cap Fund',c:'Large Cap',r:'18.3% 5Y'},
+  {n:'JM Value Fund',c:'Value',r:'27.1% 5Y'},{n:'JM Midcap Fund',c:'Mid Cap',r:'—'},
+  {n:'JM Small Cap Fund',c:'Small Cap',r:'—'},{n:'JM ELSS Tax Saver Fund',c:'ELSS',r:'21.3% 5Y'},
+  // 360 ONE
+  {n:'360 ONE Flexi Cap Fund',c:'Flexi Cap',r:'—'},{n:'360 ONE Focused Equity Fund',c:'Focused',r:'15.8% 5Y'},
+  {n:'360 ONE Multi Cap Fund',c:'Multi Cap',r:'—'},{n:'360 ONE ELSS Tax Saver Fund',c:'ELSS',r:'14.2% 5Y'},
+  // HSBC
+  {n:'HSBC Flexi Cap Fund',c:'Flexi Cap',r:'17.5% 5Y'},{n:'HSBC Large Cap Fund',c:'Large Cap',r:'15.3% 5Y'},
+  {n:'HSBC Mid Cap Fund',c:'Mid Cap',r:'20.1% 5Y'},{n:'HSBC Small Cap Fund',c:'Small Cap',r:'23.8% 5Y'},
+  {n:'HSBC ELSS Tax Saver Fund',c:'ELSS',r:'16.4% 5Y'},{n:'HSBC Value Fund',c:'Value',r:'17.9% 5Y'},
+  {n:'HSBC Multi Cap Fund',c:'Multi Cap',r:'—'},{n:'HSBC Balanced Advantage Fund',c:'BAF',r:'—'},
+  // LIC MF
+  {n:'LIC MF Flexi Cap Fund',c:'Flexi Cap',r:'14.8% 5Y'},{n:'LIC MF Large Cap Fund',c:'Large Cap',r:'13.2% 5Y'},
+  {n:'LIC MF Multi Cap Fund',c:'Multi Cap',r:'—'},{n:'LIC MF Large & Mid Cap Fund',c:'Large & Mid Cap',r:'16.1% 5Y'},
+  // Groww
+  {n:'Groww Nifty 50 Index Fund',c:'Index',r:'—'},{n:'Groww Flexi Cap Fund',c:'Flexi Cap',r:'—'},
+  {n:'Groww ELSS Tax Saver Fund',c:'ELSS',r:'—'},{n:'Groww Value Fund',c:'Value',r:'—'},
+  // Helios
+  {n:'Helios Flexi Cap Fund',c:'Flexi Cap',r:'—'},{n:'Helios Financial Services Fund',c:'Sector/Thematic',r:'—'},
+  // Samco
+  {n:'Samco Flexi Cap Fund',c:'Flexi Cap',r:'20.1% 3Y'},{n:'Samco ELSS Tax Saver Fund',c:'ELSS',r:'—'},
+  // Quantum
+  {n:'Quantum Long Term Equity Value Fund',c:'Value',r:'14.8% 5Y'},{n:'Quantum India ESG Equity Fund',c:'Sector/Thematic',r:'—'},
+  {n:'Quantum Multi Asset Fund of Funds',c:'Multi Asset',r:'11.2% 5Y'},{n:'Quantum Small Cap Fund',c:'Small Cap',r:'—'},
+  // Shriram
+  {n:'Shriram Flexi Cap Fund',c:'Flexi Cap',r:'—'},{n:'Shriram Multi Cap Fund',c:'Multi Cap',r:'—'},
+  // Union
+  {n:'Union Flexi Cap Fund',c:'Flexi Cap',r:'15.3% 5Y'},{n:'Union Midcap Fund',c:'Mid Cap',r:'18.7% 5Y'},
+  {n:'Union Small Cap Fund',c:'Small Cap',r:'19.2% 5Y'},{n:'Union ELSS Tax Saver Fund',c:'ELSS',r:'14.5% 5Y'},
+  // Aditya Birla Sun Life (ABSL)
+  {n:'Aditya Birla Sun Life Frontline Equity Fund',c:'Large Cap',r:'14.8% 5Y'},{n:'Aditya Birla Sun Life Flexi Cap Fund',c:'Flexi Cap',r:'15.1% 5Y'},
+  {n:'Aditya Birla Sun Life Small Cap Fund',c:'Small Cap',r:'20.8% 5Y'},{n:'Aditya Birla Sun Life Mid Cap Fund',c:'Mid Cap',r:'18.5% 5Y'},
+  {n:'Aditya Birla Sun Life ELSS Tax Saver Fund',c:'ELSS',r:'15.2% 5Y'},{n:'Aditya Birla Sun Life Equity Hybrid 95 Fund',c:'Aggressive Hybrid',r:'14.9% 5Y'},
+  {n:'Aditya Birla Sun Life BAF Fund',c:'BAF',r:'13.5% 5Y'},{n:'Aditya Birla Sun Life Multi Asset Allocation Fund',c:'Multi Asset',r:'15.8% 3Y'},
+  {n:'Aditya Birla Sun Life Digital India Fund',c:'Sector/Thematic',r:'16.9% 5Y'},{n:'Aditya Birla Sun Life India GenNext Fund',c:'Sector/Thematic',r:'16.2% 5Y'},
+  {n:'Aditya Birla Sun Life Focused Fund',c:'Focused',r:'12.3% 5Y'},{n:'Aditya Birla Sun Life Pure Value Fund',c:'Value',r:'17.8% 5Y'},
+  // Sundaram
+  {n:'Sundaram Flexi Cap Fund',c:'Flexi Cap',r:'14.2% 5Y'},{n:'Sundaram Small Cap Fund',c:'Small Cap',r:'23.1% 5Y'},
+  {n:'Sundaram Large Cap Fund',c:'Large Cap',r:'13.5% 5Y'},{n:'Sundaram Large & Mid Cap Fund',c:'Large & Mid Cap',r:'16.8% 5Y'},
+  // Navi
+  {n:'Navi Nifty Next 50 Index Fund',c:'Index',r:'—'},{n:'Navi ELSS Tax Saver Fund',c:'ELSS',r:'—'},
+  {n:'Navi Flexi Cap Fund',c:'Flexi Cap',r:'—'},{n:'Navi US Total Stock Market FOF',c:'International/FOF',r:'—'},
+  // Bank of India
+  {n:'Bank of India Flexi Cap Fund',c:'Flexi Cap',r:'—'},{n:'Bank of India Small Cap Fund',c:'Small Cap',r:'—'},
+  // Trust MF
+  {n:'Trust MF Flexi Cap Fund',c:'Flexi Cap',r:'—'},{n:'Trust MF Small Cap Fund',c:'Small Cap',r:'—'},
+  // ITI
+  {n:'ITI Flexi Cap Fund',c:'Flexi Cap',r:'—'},{n:'ITI Small Cap Fund',c:'Small Cap',r:'—'},
+  {n:'ITI Mid Cap Fund',c:'Mid Cap',r:'—'},{n:'ITI Multi Cap Fund',c:'Multi Cap',r:'—'},
+  // Old Bridge
+  {n:'Old Bridge Focused Equity Fund',c:'Focused',r:'—'},{n:'Old Bridge All Cap Fund',c:'Flexi Cap',r:'—'},
+  // Zerodha (now Grow)
+  {n:'Zerodha ELSS Tax Saver Fund',c:'ELSS',r:'—'},{n:'Zerodha Nifty LargeMidcap 250 Index Fund',c:'Index',r:'—'},
+  // PPFAS
+  {n:'PPFAS Flexi Cap Fund',c:'Flexi Cap',r:'19.8% 5Y'},{n:'PPFAS ELSS Tax Saver Fund',c:'ELSS',r:'—'},
+  // Bajaj Finserv
+  {n:'Bajaj Finserv Flexi Cap Fund',c:'Flexi Cap',r:'—'},{n:'Bajaj Finserv Large Cap Fund',c:'Large Cap',r:'—'},
+  {n:'Bajaj Finserv Multi Cap Fund',c:'Multi Cap',r:'—'},{n:'Bajaj Finserv ELSS Tax Saver Fund',c:'ELSS',r:'—'},
+  // Mahindra Manulife
+  {n:'Mahindra Manulife Flexi Cap Fund',c:'Flexi Cap',r:'16.4% 5Y'},{n:'Mahindra Manulife Multi Cap Fund',c:'Multi Cap',r:'22.8% 3Y'},
+  {n:'Mahindra Manulife Small Cap Fund',c:'Small Cap',r:'—'},{n:'Mahindra Manulife Large Cap Fund',c:'Large Cap',r:'—'},
+  {n:'Mahindra Manulife ELSS Tax Saver Fund',c:'ELSS',r:'15.1% 5Y'},{n:'Mahindra Manulife Large & Mid Cap Fund',c:'Large & Mid Cap',r:'17.9% 3Y'},
+  // Franklin Templeton
+  {n:'Franklin India Prima Fund',c:'Mid Cap',r:'18.9% 5Y'},{n:'Franklin India Equity Hybrid Fund',c:'Aggressive Hybrid',r:'15.7% 5Y'},
+  {n:'Franklin India Bluechip Fund',c:'Large Cap',r:'14.5% 5Y'},{n:'Franklin India ELSS Tax Saver Fund',c:'ELSS',r:'15.3% 5Y'},
+  {n:'Franklin India Focused Equity Fund',c:'Focused',r:'16.8% 5Y'},{n:'Franklin India Multi Cap Fund',c:'Multi Cap',r:'—'},
+];
+
+// Global autocomplete state
+let _acDropdown = null;
+let _acIdx = -1;
+let _acMatches = [];
+
+function _acClose() {
+  const old = document.getElementById('fund-ac-dropdown');
+  if (old) old.remove();
+  _acDropdown = null;
+  _acIdx = -1;
+  _acMatches = [];
+}
+
+function _acSelect(m) {
+  const inp = document.getElementById('custom-fund-name');
+  if (inp) inp.value = m.n;
+  const cat = document.getElementById('custom-fund-cat');
+  if (cat) cat.value = m.c;
+  const ret = document.getElementById('custom-fund-ret');
+  if (ret) ret.value = m.r;
+  _acClose();
+}
+
+function _acHighlight() {
+  const dd = document.getElementById('fund-ac-dropdown');
+  if (!dd) return;
+  Array.from(dd.children).forEach((r, i) => {
+    r.style.background = i === _acIdx ? '#e8eef8' : '#fff';
+  });
+  // Scroll into view
+  if (_acIdx >= 0 && dd.children[_acIdx]) {
+    dd.children[_acIdx].scrollIntoView({ block: 'nearest' });
+  }
+}
+
+function _acShow(inp) {
+  _acClose();
+  const q = inp.value.trim().toLowerCase();
+  if (q.length < 2) return;
+
+  // Search: split query into words, all must match
+  const words = q.split(/\s+/);
+  // Smart search: match all words, also try partial/fuzzy
+  _acMatches = FUND_DB.filter(f => {
+    const name = f.n.toLowerCase();
+    return words.every(w => name.includes(w));
+  });
+  // If no exact match, try matching any word
+  if (_acMatches.length === 0) {
+    _acMatches = FUND_DB.filter(f => {
+      const name = f.n.toLowerCase();
+      return words.some(w => w.length >= 3 && name.includes(w));
+    });
+  }
+  // Sort: exact matches first, then by name length
+  _acMatches.sort((a, b) => {
+    const aExact = words.every(w => a.n.toLowerCase().includes(w)) ? 0 : 1;
+    const bExact = words.every(w => b.n.toLowerCase().includes(w)) ? 0 : 1;
+    return aExact - bExact || a.n.length - b.n.length;
+  });
+  _acMatches = _acMatches.slice(0, 12);
+
+  if (_acMatches.length === 0) {
+    // Show "no match" hint
+    const dd = document.createElement('div');
+    dd.id = 'fund-ac-dropdown';
+    dd.style.cssText = 'position:absolute;left:0;right:0;top:100%;background:#fff;border:2px solid #e2e8f0;border-top:none;border-radius:0 0 10px 10px;box-shadow:0 8px 20px rgba(0,0,0,.1);z-index:9999;padding:14px';
+    dd.innerHTML = '<div style="text-align:center;color:#94a3b8;font-size:11px">No match found for "<b>'+escH(q)+'</b>"<br><span style="color:#64748b">You can still type the full fund name & set category manually</span></div>';
+    inp.parentElement.style.position = 'relative';
+    inp.parentElement.appendChild(dd);
+    _acDropdown = dd;
+    return;
+  }
+
+  const dd = document.createElement('div');
+  dd.id = 'fund-ac-dropdown';
+  dd.style.cssText = 'position:absolute;left:0;right:0;top:100%;background:#fff;border:2px solid #1B3A6B;border-top:none;border-radius:0 0 10px 10px;box-shadow:0 10px 30px rgba(0,0,0,.2);z-index:9999;max-height:300px;overflow-y:auto';
+
+  _acMatches.forEach((m, i) => {
+    const row = document.createElement('div');
+    row.setAttribute('data-ac-idx', i);
+    row.style.cssText = 'padding:10px 14px;cursor:pointer;border-bottom:1px solid #f0f0f0;background:#fff;transition:background .08s';
+
+    // Highlight matching text
+    let displayName = escH(m.n);
+    words.forEach(w => {
+      if (w.length >= 2) {
+        const re = new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+        displayName = displayName.replace(re, '<mark style="background:#fef08a;padding:0 1px;border-radius:2px">$1</mark>');
+      }
+    });
+
+    row.innerHTML = '<div style="font-weight:700;font-size:12px;color:#1B3A6B;line-height:1.4">' + displayName + '</div>'
+      + '<div style="display:flex;gap:6px;margin-top:3px">'
+      + '<span style="font-size:9px;background:#f1f5f9;padding:2px 7px;border-radius:4px;color:#475569;font-weight:700">' + escH(m.c) + '</span>'
+      + '<span style="font-size:9px;background:#d1fae5;padding:2px 7px;border-radius:4px;color:#065f46;font-weight:800">' + escH(m.r) + '</span>'
+      + '</div>';
+
+    row.onmouseenter = () => { _acIdx = i; _acHighlight(); };
+    row.onclick = (e) => { e.stopPropagation(); _acSelect(m); };
+    dd.appendChild(row);
+  });
+
+  // Position relative to the input's wrapper
+  const wrapper = inp.parentElement;
+  wrapper.style.position = 'relative';
+  wrapper.appendChild(dd);
+  _acDropdown = dd;
+}
+
+// Use event delegation so it works even after re-renders
+document.addEventListener('input', function(e) {
+  if (e.target && e.target.id === 'custom-fund-name') {
+    _acShow(e.target);
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.target && e.target.id === 'custom-fund-name') {
+    const dd = document.getElementById('fund-ac-dropdown');
+    if (!dd) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      _acIdx = Math.min(_acIdx + 1, _acMatches.length - 1);
+      _acHighlight();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      _acIdx = Math.max(_acIdx - 1, 0);
+      _acHighlight();
+    } else if (e.key === 'Enter' && _acIdx >= 0 && _acMatches[_acIdx]) {
+      e.preventDefault();
+      _acSelect(_acMatches[_acIdx]);
+    } else if (e.key === 'Escape') {
+      _acClose();
+    }
+  }
+});
+
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.id !== 'custom-fund-name') {
+    _acClose();
+  }
+});
+
+// ═══════════════════════════════════════════════
+// CUSTOM FUND TESTER
+// ═══════════════════════════════════════════════
+function addCustomFund() {
+  const name = document.getElementById('custom-fund-name').value.trim();
+  const cat = document.getElementById('custom-fund-cat').value.trim() || 'Flexi Cap';
+  const ret = document.getElementById('custom-fund-ret').value.trim() || '—';
+  const risk = document.getElementById('custom-fund-risk').value;
+  if (!name) { alert('Please enter a fund name'); return; }
+
+  // Add to REINVEST_SUGGESTIONS
+  REINVEST_SUGGESTIONS[risk].push({ name, cat, ret, why: 'Custom — added by you for testing' });
+
+  // Clear input
+  document.getElementById('custom-fund-name').value = '';
+
+  // Refresh the custom fund list display
+  renderCustomFunds();
+
+  // Also refresh the reinvestment tables above
+  refreshReinvestTables();
+}
+
+function removeCustomFund(risk, idx) {
+  REINVEST_SUGGESTIONS[risk].splice(idx, 1);
+  renderCustomFunds();
+  refreshReinvestTables();
+}
+
+function renderCustomFunds() {
+  const el = document.getElementById('custom-fund-list');
+  if (!el) return;
+  const customFunds = [];
+  ['conservative','moderate','aggressive'].forEach(r => {
+    REINVEST_SUGGESTIONS[r].forEach((s, i) => {
+      if (s.why && s.why.includes('Custom')) customFunds.push({ ...s, risk: r, idx: i });
+    });
+  });
+  if (customFunds.length === 0) { el.innerHTML = ''; return; }
+  let h = '<div style="font-size:10px;font-weight:700;color:var(--ink3);margin-bottom:6px">YOUR CUSTOM FUNDS:</div>';
+  h += '<div style="display:flex;flex-wrap:wrap;gap:6px">';
+  customFunds.forEach(f => {
+    const colors = { conservative: '#10b981', moderate: '#3b82f6', aggressive: '#ef4444' };
+    h += '<span style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px">'
+      +'<span style="font-weight:700;color:var(--navy)">'+escH(f.name)+'</span>'
+      +'<span style="font-size:9px;color:#64748b">'+escH(f.cat)+'</span>'
+      +'<span style="font-size:9px;color:#16a34a;font-weight:700">'+escH(f.ret)+'</span>'
+      +'<span style="font-size:8px;color:'+(colors[f.risk]||'#64748b')+';font-weight:800;text-transform:uppercase">'+f.risk+'</span>'
+      +'<button onclick="removeCustomFund(\''+f.risk+'\','+f.idx+')" style="background:none;border:none;color:#ef4444;font-size:14px;cursor:pointer;padding:0 2px;line-height:1" title="Remove">×</button>'
+      +'</span>';
+  });
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+function refreshReinvestTables() {
+  // Re-render the reinvestment profile tables
+  const tables = document.querySelectorAll('[data-reinvest-profile]');
+  tables.forEach(el => {
+    const key = el.getAttribute('data-reinvest-profile');
+    let tbody = '';
+    REINVEST_SUGGESTIONS[key].forEach((s, si) => {
+      const isCustom = s.why && s.why.includes('Custom');
+      tbody += '<tr style="border-bottom:1px solid #f0f0f0;'+(isCustom?'background:#eff6ff':'')+'"><td style="padding:8px 10px"><div style="font-weight:700;color:var(--navy);font-size:11px">'+escH(s.name)+(isCustom?' <span style="font-size:8px;color:#3b82f6;font-weight:800">★ YOURS</span>':'')+'</div><div style="font-size:9px;color:#94a3b8;margin-top:2px;line-height:1.4">'+escH(s.why)+'</div></td><td style="padding:8px;font-size:10px;color:#64748b;font-weight:600">'+escH(s.cat)+'</td><td style="padding:8px;font-size:11px;color:#16a34a;font-weight:800">'+escH(s.ret)+'</td></tr>';
+    });
+    const tbodyEl = el.querySelector('tbody');
+    if (tbodyEl) tbodyEl.innerHTML = tbody;
+  });
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+renderFunds();
+</script>
+</body>
+</html>
