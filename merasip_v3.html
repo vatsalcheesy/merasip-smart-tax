@@ -212,7 +212,7 @@ td{padding:7px 8px;border-bottom:1px solid var(--border)}
       <div id="report-advisory-text" style="font-size:13px;line-height:1.85;color:var(--ink);white-space:pre-wrap;font-family:Georgia,serif"></div>
     </div>
     <div class="card" style="overflow:hidden;padding:0;margin-bottom:14px">
-      <div style="background:var(--navy);padding:10px 16px"><div style="color:#fff;font-weight:800;font-size:13px">Fund-by-Fund Analysis & Action Plan</div></div>
+      <div style="background:var(--navy);padding:10px 16px;display:flex;justify-content:space-between;align-items:center"><div style="color:#fff;font-weight:800;font-size:13px">Fund-by-Fund Analysis & Action Plan</div><button id="btn-edit-report" onclick="toggleReportEdit()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer">✏️ Edit</button></div>
       <div style="overflow-x:auto"><table id="report-table"><thead><tr><th>Fund</th><th>Category</th><th>Invested</th><th>Current</th><th>Gain</th><th>LTCG</th><th>STCG</th><th>Tax Bucket</th><th>Action</th><th>Recommendation</th></tr></thead><tbody id="report-tbody"></tbody></table></div>
     </div>
     <div id="report-harvest-plan" style="margin-bottom:14px"></div>
@@ -1210,24 +1210,29 @@ function renderReport() {
 
   const tbody = document.getElementById('report-tbody');
   tbody.innerHTML='';
+  // Store original actions/recs for edit mode
+  window._reportEdits = window._reportEdits || {};
   funds.forEach((f,i)=>{
     const r=results[i]||{action:"HOLD",color:"#1B3A6B",bg:"#E8EEF8",switchTo:null,inTrustner:false,mode:"hold"};
     const mc=MC[i%MC.length];
     const gain=f.current-f.invested,yrs=holdingYears(f.purchaseDate);
-    const rec=r.switchTo?(r.mode==="switch-amc"?"🔄 Switch → "+r.switchTo.name.split(" ").slice(0,3).join(" "):"🔀 Redeem → "+r.switchTo.name.split(" ").slice(0,3).join(" ")):r.inTrustner?"✅ Hold & Reinvest Same":"—";
+    const origRec=r.switchTo?(r.mode==="switch-amc"?"🔄 Switch → "+r.switchTo.name.split(" ").slice(0,3).join(" "):"🔀 Redeem → "+r.switchTo.name.split(" ").slice(0,3).join(" ")):r.inTrustner?"✅ Hold & Reinvest Same":"—";
+    const editedAction = window._reportEdits[i]?.action || r.action;
+    const editedRec = window._reportEdits[i]?.rec || origRec;
     const tr=document.createElement('tr');
     tr.style.background=i%2?"var(--bg1)":"var(--bg0)";
+    tr.setAttribute('data-fund-idx', i);
     tr.innerHTML=
       '<td style="font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(f.name||"—")+'</td>'
-      +'<td style="color:var(--ink3);white-space:nowrap">'+getCatLabel(f.category)+'</td>'
+      +'<td style="color:var(--ink3);white-space:nowrap" class="rpt-cat">'+getCatLabel(f.category)+'</td>'
       +'<td style="text-align:right">'+inr(f.invested)+'</td>'
       +'<td style="text-align:right;font-weight:700;color:'+mc+'">'+inr(f.current)+'</td>'
       +'<td style="text-align:right;font-weight:700;color:'+gc(gain)+'">'+inr(gain,true)+'</td>'
       +'<td style="text-align:right;color:var(--green);font-weight:600;font-size:11px">'+(f.taxType==='debt50aa'?'—':((f.ltcgGain||0)===0?'—':'₹'+(f.ltcgGain||0).toLocaleString("en-IN")+'<br><span style="font-size:9px;color:var(--ink3)">Tax ₹'+Math.round(Math.max(0,f.ltcgGain||0)*0.125).toLocaleString("en-IN")+'</span>'))+'</td>'
       +'<td style="text-align:right;color:var(--amber);font-weight:600;font-size:11px">'+((f.stcgGain||0)===0?'—':'₹'+(f.stcgGain||0).toLocaleString("en-IN")+'<br><span style="font-size:9px;color:var(--ink3)">Tax ₹'+(f.taxType==='equity'?Math.round(Math.max(0,f.stcgGain||0)*0.20):Math.round(Math.max(0,f.stcgGain||0)*getClient().slab/100)).toLocaleString("en-IN")+(f.taxType==='equity'?' @20%':' @'+getClient().slab+'%')+'</span>')+'</td>'
       +'<td style="white-space:nowrap;font-size:10px;color:var(--ink3)">'+escH(f.taxBucket||'')+'</td>'
-      +'<td><span style="background:'+r.bg+';color:'+r.color+';font-size:10px;font-weight:800;padding:2px 7px;border-radius:4px;white-space:nowrap">'+r.action+'</span></td>'
-      +'<td style="font-size:10px;color:var(--navy);font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+rec+'</td>';
+      +'<td class="rpt-action"><span style="background:'+r.bg+';color:'+r.color+';font-size:10px;font-weight:800;padding:2px 7px;border-radius:4px;white-space:nowrap">'+escH(editedAction)+'</span></td>'
+      +'<td class="rpt-rec" style="font-size:10px;color:var(--navy);font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escH(editedRec)+'</td>';
     tbody.appendChild(tr);
     if(remarks[i]){
       const tr2=document.createElement('tr');
@@ -1243,6 +1248,53 @@ function renderReport() {
 
   // ═══ RENDER HARVEST PLAN IN REPORT ═══
   renderReportHarvestPlan(cl, results);
+}
+
+let _reportEditMode = false;
+function toggleReportEdit() {
+  _reportEditMode = !_reportEditMode;
+  const btn = document.getElementById('btn-edit-report');
+  const tbody = document.getElementById('report-tbody');
+  if (!tbody) return;
+
+  if (_reportEditMode) {
+    btn.textContent = '💾 Save';
+    btn.style.background = '#16a34a';
+    // Make Action and Recommendation cells editable
+    tbody.querySelectorAll('tr[data-fund-idx]').forEach(tr => {
+      const idx = parseInt(tr.getAttribute('data-fund-idx'));
+      const actionTd = tr.querySelector('.rpt-action');
+      const recTd = tr.querySelector('.rpt-rec');
+      if (actionTd) {
+        const curAction = (window._reportEdits[idx]?.action || actionTd.textContent).trim();
+        actionTd.innerHTML = '<select data-field="action" style="font-size:10px;font-weight:700;padding:3px 5px;border:2px solid var(--navy);border-radius:4px;background:#fff;color:var(--navy)">'
+          + ['HOLD ✅','HARVEST & REINVEST ✅','PARTIAL HARVEST ⚡','LOSS-HARVEST 📉','SWITCH 🔄','REDEEM 🔀','SIP CONTINUE ▶️','SIP STOP ⏹️','WATCH 👀'].map(a =>
+            '<option value="'+a+'"'+(curAction.includes(a.split(' ')[0])?'selected':'')+'>'+a+'</option>'
+          ).join('')
+          + '</select>';
+      }
+      if (recTd) {
+        const curRec = (window._reportEdits[idx]?.rec || recTd.textContent).trim();
+        recTd.innerHTML = '<input type="text" data-field="rec" value="'+escH(curRec)+'" style="font-size:10px;width:140px;padding:3px 6px;border:2px solid var(--navy);border-radius:4px;font-weight:600;color:var(--navy)" placeholder="Recommendation...">';
+      }
+    });
+  } else {
+    btn.textContent = '✏️ Edit';
+    btn.style.background = 'rgba(255,255,255,.15)';
+    // Save edits
+    tbody.querySelectorAll('tr[data-fund-idx]').forEach(tr => {
+      const idx = parseInt(tr.getAttribute('data-fund-idx'));
+      const actionSel = tr.querySelector('select[data-field="action"]');
+      const recInp = tr.querySelector('input[data-field="rec"]');
+      if (actionSel || recInp) {
+        if (!window._reportEdits[idx]) window._reportEdits[idx] = {};
+        if (actionSel) window._reportEdits[idx].action = actionSel.value;
+        if (recInp) window._reportEdits[idx].rec = recInp.value;
+      }
+    });
+    // Re-render to show saved values
+    renderReport();
+  }
 }
 
 function renderReportHarvestPlan(cl, results) {
