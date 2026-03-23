@@ -1276,11 +1276,22 @@ function renderReportHarvestPlan(cl, results) {
     let switchTo=catLbl+' fund ('+amcN+' or better)';
     const fU=f.units||0;
     const curNAV=fU>0?f.current/fU:(f.nav||0);
-    const avgCst=fU>0?f.invested/fU:0;
-    const gPerU=curNAV-avgCst;
-    let exUnits=0,sellVal=0,fraction=0;
-    if(fU>0&&gPerU>0){exUnits=Math.min(needed/gPerU,fU);sellVal=exUnits*curNAV;fraction=exUnits/fU;}
-    else{fraction=needed/f.gain;exUnits=fraction*fU;sellVal=fraction*f.current;}
+    // FIFO calculation
+    let exUnits=0,sellVal=0,costB=0,gainAcc=0;
+    const txns=(f.fifoTxns||[]).filter(t=>t.units>0&&t.days>=365);
+    if(txns.length>0&&curNAV>0){
+      txns.sort((a,b)=>b.days-a.days);
+      for(const t of txns){
+        if(gainAcc>=needed)break;
+        const ug=curNAV-t.price;if(ug<=0)continue;
+        const rem=needed-gainAcc;
+        const un=Math.min(rem/ug,t.units);
+        exUnits+=un;costB+=un*t.price;gainAcc+=un*ug;
+      }
+      sellVal=exUnits*curNAV;
+    }
+    if(exUnits===0&&fU>0){const ac=f.invested/fU;const gp=curNAV-ac;if(gp>0){exUnits=Math.min(needed/gp,fU);sellVal=exUnits*curNAV;}else{const fr=needed/f.gain;exUnits=fr*fU;sellVal=fr*f.current;}}
+    const fraction=fU>0?exUnits/fU:0;
     plan.push({name:f.name,category:getCatLabel(f.category),harvest:needed,pct:(fraction*100).toFixed(1),totalGain:f.gain,invested:f.invested,current:f.current,action:action,switchTo:switchTo,totalUnits:fU,nav:curNAV,exactUnits:exUnits,sellValue:sellVal});
     filled+=needed;
   }
@@ -1753,6 +1764,7 @@ function parsePortfolioText(txt) {
     let ltcgGain = 0, stcgGain = 0;
     let txnFound = false;
     let minTxnDays = Infinity; // Track minimum holding days across all parsed transactions
+    const fifoTxns = []; // Store per-transaction data for FIFO harvest calculation
     const txnRegex = /\d+\s+(SIP Purchase|Switch In|S\s*T\s*P\s*In|Purchase|STP In|STP\s*In)\s+(\d{2}-\d{2}-\d{2})\s+/gi;
     let txnMatch;
     while((txnMatch = txnRegex.exec(blockText)) !== null) {
@@ -1805,6 +1817,26 @@ function parsePortfolioText(txt) {
 
 
       if(effectiveDays < minTxnDays) minTxnDays = effectiveDays;
+
+      // Extract units and purchase price for FIFO calculation
+      // nums format: amount, 0, 0, 0, purchaseNAV(4dec), units(4dec), cummUnits(4dec), sensex, curValue, ...
+      let txnUnits = 0, txnPurchasePrice = 0;
+      for(let ui = 0; ui < Math.min(nums.length, 8); ui++) {
+        const nStr = txnLine.match(/-?[\d,]+\.?\d*/g);
+        if(nStr && nStr[ui]) {
+          const dec = nStr[ui].split('.')[1]?.length || 0;
+          if(dec === 4 && parseNum(nStr[ui]) > 0.01 && parseNum(nStr[ui]) < 100000) {
+            txnPurchasePrice = parseNum(nStr[ui]);
+            if(ui+1 < nStr.length) {
+              const dec2 = nStr[ui+1].split('.')[1]?.length || 0;
+              if(dec2 === 4) txnUnits = parseNum(nStr[ui+1]);
+            }
+            break;
+          }
+        }
+      }
+      fifoTxns.push({ units: txnUnits, price: txnPurchasePrice, gain: txnGain, days: effectiveDays });
+
       const bucket = getTaxBucket(cat, fb.name, txnDate);
       const classified = classifyTxnGain(txnGain, effectiveDays, bucket);
       ltcgGain += classified.ltcg;
@@ -1869,6 +1901,7 @@ function parsePortfolioText(txt) {
       switchTarget: '',
       units: totalUnits,
       nav: latestNAV,
+      fifoTxns: fifoTxns, // Per-transaction data for FIFO harvest
       ltcgGain: Math.round(ltcgGain * 100) / 100,
       stcgGain: Math.round(stcgGain * 100) / 100,
       taxBucket: dispBucket.label,
@@ -1946,38 +1979,56 @@ function generateHarvestPlan() {
   });
   equityLTCGFunds.sort((a, b) => b.gain - a.gain);
 
-  // Step 2: Greedily fill exemption with correct FIFO-based unit calculation
+  // Step 2: Greedily fill exemption with FIFO-based unit calculation
   let filled = 0;
   const harvestPlan = [];
   for (const f of equityLTCGFunds) {
     if (filled >= remainingExemption) break;
     const amountNeeded = Math.min(f.gain, remainingExemption - filled);
 
-    // Calculate current NAV (always from current value / units)
     const fUnits = f.units || 0;
     const currentNAV = fUnits > 0 ? f.current / fUnits : (f.nav || 0);
-    const avgCost = fUnits > 0 ? f.invested / fUnits : 0;
-    const gainPerUnit = currentNAV - avgCost;
 
-    // Calculate exact units using gain-per-unit (FIFO approximation)
-    // gain = units × (currentNAV - avgCost)
-    // units = gain / (currentNAV - avgCost)
+    // FIFO: iterate oldest transactions first, accumulate gain until target
     let exactUnits = 0;
     let sellValue = 0;
-    let fraction = 0;
+    let costBasis = 0;
+    let gainAccum = 0;
+    const txns = (f.fifoTxns || []).filter(t => t.units > 0 && t.days >= 365);
 
-    if (fUnits > 0 && gainPerUnit > 0) {
-      exactUnits = Math.min(amountNeeded / gainPerUnit, fUnits);
+    if (txns.length > 0 && currentNAV > 0) {
+      // Sort by days DESC (oldest first = highest days)
+      txns.sort((a, b) => b.days - a.days);
+      for (const t of txns) {
+        if (gainAccum >= amountNeeded) break;
+        const unitGain = currentNAV - t.price;
+        if (unitGain <= 0) continue;
+        const remainingGain = amountNeeded - gainAccum;
+        const unitsNeeded = Math.min(remainingGain / unitGain, t.units);
+        exactUnits += unitsNeeded;
+        costBasis += unitsNeeded * t.price;
+        gainAccum += unitsNeeded * unitGain;
+      }
       sellValue = exactUnits * currentNAV;
-      fraction = exactUnits / fUnits;
-    } else {
-      fraction = amountNeeded / f.gain;
-      exactUnits = fraction * fUnits;
-      sellValue = fraction * f.current;
     }
 
-    const costBasis = exactUnits * avgCost;
-    const actualGain = sellValue - costBasis;
+    // Fallback if FIFO data not available
+    if (exactUnits === 0 && fUnits > 0) {
+      const avgCost = f.invested / fUnits;
+      const gainPerUnit = currentNAV - avgCost;
+      if (gainPerUnit > 0) {
+        exactUnits = Math.min(amountNeeded / gainPerUnit, fUnits);
+        sellValue = exactUnits * currentNAV;
+        costBasis = exactUnits * avgCost;
+      } else {
+        const fraction = amountNeeded / f.gain;
+        exactUnits = fraction * fUnits;
+        sellValue = fraction * f.current;
+        costBasis = fraction * f.invested;
+      }
+    }
+
+    const fraction = fUnits > 0 ? exactUnits / fUnits : 0;
 
     let unitsToSellLabel = '';
     if (exactUnits > 0) {
