@@ -1274,11 +1274,14 @@ function renderReportHarvestPlan(cl, results) {
     const catLbl=getCatLabel(f.category);
     let action='Switch / Rebuy';
     let switchTo=catLbl+' fund ('+amcN+' or better)';
-    const fU=f.units||0, fNAV=f.nav||(fU>0?f.current/fU:0);
-    const fraction=needed/f.gain;
-    const exUnits=fU>0?(fraction*fU):0;
-    const sellVal=exUnits>0?exUnits*fNAV:fraction*f.current;
-    plan.push({name:f.name,category:getCatLabel(f.category),harvest:needed,pct:pct,totalGain:f.gain,invested:f.invested,current:f.current,action:action,switchTo:switchTo,totalUnits:fU,nav:fNAV,exactUnits:exUnits,sellValue:sellVal});
+    const fU=f.units||0;
+    const curNAV=fU>0?f.current/fU:(f.nav||0);
+    const avgCst=fU>0?f.invested/fU:0;
+    const gPerU=curNAV-avgCst;
+    let exUnits=0,sellVal=0,fraction=0;
+    if(fU>0&&gPerU>0){exUnits=Math.min(needed/gPerU,fU);sellVal=exUnits*curNAV;fraction=exUnits/fU;}
+    else{fraction=needed/f.gain;exUnits=fraction*fU;sellVal=fraction*f.current;}
+    plan.push({name:f.name,category:getCatLabel(f.category),harvest:needed,pct:(fraction*100).toFixed(1),totalGain:f.gain,invested:f.invested,current:f.current,action:action,switchTo:switchTo,totalUnits:fU,nav:curNAV,exactUnits:exUnits,sellValue:sellVal});
     filled+=needed;
   }
 
@@ -1851,8 +1854,9 @@ function parsePortfolioText(txt) {
     // Determine tax bucket label for display
     const dispBucket = getTaxBucket(cat, fb.name, purchaseDate);
 
-    // Calculate NAV from current/units if not already found
-    if(totalUnits > 0 && latestNAV === 0) {
+    // ALWAYS calculate current NAV from current value / units
+    // The "NAV" from Total row is actually average COST, not current NAV
+    if(totalUnits > 0 && current > 0) {
       latestNAV = Math.round((current / totalUnits) * 100) / 100;
     }
 
@@ -1942,20 +1946,38 @@ function generateHarvestPlan() {
   });
   equityLTCGFunds.sort((a, b) => b.gain - a.gain);
 
-  // Step 2: Greedily fill exemption
+  // Step 2: Greedily fill exemption with correct FIFO-based unit calculation
   let filled = 0;
   const harvestPlan = [];
   for (const f of equityLTCGFunds) {
     if (filled >= remainingExemption) break;
     const amountNeeded = Math.min(f.gain, remainingExemption - filled);
-    const fraction = amountNeeded / f.gain;
 
-    // Calculate exact units to sell
+    // Calculate current NAV (always from current value / units)
     const fUnits = f.units || 0;
-    const fNAV = f.nav || (fUnits > 0 ? f.current / fUnits : 0);
-    const exactUnits = fUnits > 0 ? (fraction * fUnits) : 0;
-    const sellValue = exactUnits > 0 ? exactUnits * fNAV : fraction * f.current;
-    const costBasis = fraction * f.invested;
+    const currentNAV = fUnits > 0 ? f.current / fUnits : (f.nav || 0);
+    const avgCost = fUnits > 0 ? f.invested / fUnits : 0;
+    const gainPerUnit = currentNAV - avgCost;
+
+    // Calculate exact units using gain-per-unit (FIFO approximation)
+    // gain = units × (currentNAV - avgCost)
+    // units = gain / (currentNAV - avgCost)
+    let exactUnits = 0;
+    let sellValue = 0;
+    let fraction = 0;
+
+    if (fUnits > 0 && gainPerUnit > 0) {
+      exactUnits = Math.min(amountNeeded / gainPerUnit, fUnits);
+      sellValue = exactUnits * currentNAV;
+      fraction = exactUnits / fUnits;
+    } else {
+      fraction = amountNeeded / f.gain;
+      exactUnits = fraction * fUnits;
+      sellValue = fraction * f.current;
+    }
+
+    const costBasis = exactUnits * avgCost;
+    const actualGain = sellValue - costBasis;
 
     let unitsToSellLabel = '';
     if (exactUnits > 0) {
@@ -1982,7 +2004,7 @@ function generateHarvestPlan() {
       action: action,
       switchTo: switchTo,
       totalUnits: fUnits,
-      nav: fNAV,
+      nav: currentNAV,
       exactUnits: exactUnits,
       sellValue: sellValue,
       costBasis: costBasis,
