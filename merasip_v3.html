@@ -1553,15 +1553,19 @@ function parsePortfolioText(txt) {
   // Strategy: find all ISIN blocks — each ISIN marks a fund
   // PDF text from pdf.js joins items with spaces, so we work with the whole text
   // Pattern: FundName (ISINcode) date (NNNdays) sensex invested divr units price nav curvalue date curvalue ... total gain abs% xirr%
-  const isinRegex = /([A-Za-z][A-Za-z\s&.()'\-]+?)\s*\(INF([A-Z0-9]+)\)\s*(?:Folio\s*:\s*[\d\/]+\s*)?(\d{2}-\d{2}-\d{2})\s*\((\d+)\s*Days?\)/gi;
+  // CAS layout: FundName\n(ISINcode) [on same line:] sensex invested divR UNITS PRICE NAV date CURRENT ...\n(NNN Days)
+  // The numbers appear BETWEEN the ISIN line and the (Days) line
+  // We capture everything between ISIN and Days to extract the header numbers
+  const isinRegex = /([A-Za-z][A-Za-z\s&.()'\-]+?)\s*\(INF([A-Z0-9]+)\)\s*(?:Folio\s*:\s*[\d\/]+\s*)?([\s\S]*?)(\d{2}-\d{2}-\d{2})\s*\((\d+)\s*Days?\)/gi;
   let match;
   const fundBlocks = [];
   while((match = isinRegex.exec(txt)) !== null) {
     fundBlocks.push({
       name: match[1].replace(/\s+/g,' ').trim(),
       isin: 'INF'+match[2],
-      dateStr: match[3],
-      days: parseInt(match[4]),
+      headerText: match[3], // text between ISIN and date — contains sensex, invested, units, NAV, current
+      dateStr: match[4],
+      days: parseInt(match[5]),
       pos: match.index,
       endPos: match.index + match[0].length
     });
@@ -1574,21 +1578,23 @@ function parsePortfolioText(txt) {
     const nextPos = fi+1 < fundBlocks.length ? fundBlocks[fi+1].pos : txt.length;
     const blockText = txt.slice(fb.endPos, nextPos);
 
-    // Extract all numbers from the immediate vicinity (first line of numbers after date)
+    // Extract numbers from the HEADER TEXT (between ISIN and date/days)
+    // CAS format: sensex invested divR UNITS(4dec) PRICE NAV date CURRENT divRein divPaid TOTAL GAIN ABS% XIRR%
+    const headerText = fb.headerText || '';
+    const afterDays = txt.slice(fb.endPos, fb.endPos + 500);
+    // Combine header + afterDays for number extraction
+    const combinedText = headerText + ' ' + afterDays;
     const firstNums = [];
+    const rawNums = [];
     const numRegex = /[\d,]+\.\d{1,4}/g;
     let nm;
-    // Get numbers right after the (NNN Days) marker
-    const afterDays = txt.slice(fb.endPos, fb.endPos + 500);
-    while((nm = numRegex.exec(afterDays)) !== null) {
+    while((nm = numRegex.exec(combinedText)) !== null) {
       firstNums.push(parseNum(nm[0]));
-      if(firstNums.length >= 20) break;
+      rawNums.push(nm[0]);
+      if(firstNums.length >= 25) break;
     }
 
-    // The summary row format after "date (days)":
-    // sensex, invested, divr(0.00), units, price, nav, curvalue, date(17-Mar), curvalue2, divReinv(0.00), divPaid(0.00), total, gain, abs%, xirr%
-    // We need: invested (index ~1), current/total (near end)
-    if(firstNums.length < 8) continue;
+    if(firstNums.length < 5) continue;
 
     let sensex=0, invested=0, current=0, totalUnits=0, latestNAV=0;
 
@@ -1601,23 +1607,16 @@ function parsePortfolioText(txt) {
     if(firstNums[0] > 10000) { sensex = firstNums[0]; idx = 1; }
     invested = firstNums[idx];
 
-    // Find the 4-decimal number in the header = UNITS
-    // It appears after invested and divR(0.00)
-    const rawNumsInHeader = afterDays.match(/[\d,]+\.\d{1,4}/g) || [];
-    let headerUnitIdx = -1;
-    for(let hi=0; hi<rawNumsInHeader.length; hi++) {
-      const parts = rawNumsInHeader[hi].split('.');
+    // Find the FIRST 4-decimal number in header = UNITS
+    for(let hi=0; hi<rawNums.length; hi++) {
+      const parts = rawNums[hi].split('.');
       if(parts[1] && parts[1].length === 4) {
-        const val = parseNum(rawNumsInHeader[hi]);
+        const val = parseNum(rawNums[hi]);
         if(val > 0.01 && val < 500000) {
           totalUnits = val;
-          headerUnitIdx = hi;
-          // Next number = avg price, number after that = current NAV
-          if(hi+1 < rawNumsInHeader.length) {
-            // avgPrice - skip
-          }
-          if(hi+2 < rawNumsInHeader.length) {
-            const navC = parseNum(rawNumsInHeader[hi+2]);
+          // Next number after units = avgPrice, then NAV
+          if(hi+2 < rawNums.length) {
+            const navC = parseNum(rawNums[hi+2]);
             if(navC > 1 && navC < 100000) latestNAV = navC;
           }
           break;
@@ -1625,13 +1624,13 @@ function parsePortfolioText(txt) {
       }
     }
 
-    // Current value: find number after the date pattern (dd-Mon) in header
-    const dateNavMatch = afterDays.match(/\d{1,2}-[A-Z][a-z]{2}\s+([\d,]+\.\d{2})/);
+    // Current value: find number after date pattern (dd-Mon) in combined text
+    const dateNavMatch = combinedText.match(/\d{1,2}-[A-Z][a-z]{2}\s+([\d,]+\.\d{2})/);
     if(dateNavMatch) {
       current = parseNum(dateNavMatch[1]);
     }
 
-    console.log('[MeraSIP] Fund:', fb.name, 'Header parse → Units:', totalUnits, 'NAV:', latestNAV, 'Invested:', invested, 'Current:', current);
+    console.log('[MeraSIP] Fund:', fb.name, '→ Units:', totalUnits, 'NAV:', latestNAV, 'Invested:', invested, 'Current:', current, 'Raw:', rawNums.slice(0,10));
 
     // === SECONDARY: Parse from TOTAL ROW (backup/override) ===
     const totalMatch = blockText.match(/Total\s+([\d,]+\.?\d*)\s/);
