@@ -2226,7 +2226,22 @@ function generateHarvestPlan() {
   }
 
   // ══════ LOSS HARVEST ══════
-  if (lossFunds.length > 0) {
+  // Only show if there are actual gains to offset
+  const totalRealizedGains = funds.reduce((s,f) => { const g=f.current-f.invested; return s + (g>0?g:0); }, 0);
+  if (lossFunds.length > 0 && totalRealizedGains > 0) {
+    // Smart suggestion: pick a top fund from the same category
+    const catSuggestions = {
+      'Small Cap': 'Nippon India Small Cap Fund',
+      'Mid Cap': 'HDFC Mid Cap Opportunities Fund',
+      'Large Cap': 'Nippon India Large Cap Fund',
+      'Flexi Cap': 'HDFC Flexi Cap Fund',
+      'Multi Cap': 'Kotak Multicap Fund',
+      'Multi Asset': 'ICICI Pru Multi Asset Fund',
+      'ELSS': 'ICICI Prudential ELSS Tax Saver',
+      'Sector/Thematic': 'ICICI Pru Energy Opp Fund',
+      'Aggressive Hybrid': 'ICICI Pru Equity & Debt Fund',
+      'BAF': 'HDFC Balanced Advantage Fund',
+    };
     html += '<div style="margin-bottom:20px">'
       +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:16px">📉</span><span style="font-size:13px;font-weight:900;color:#dc2626">Step 2: Loss Harvesting Opportunities</span></div>'
       +'<div style="overflow-x:auto;border-radius:10px;border:2px solid #fecaca">'
@@ -2237,16 +2252,24 @@ function generateHarvestPlan() {
       +'<th style="padding:10px 8px;text-align:right;font-weight:800">Loss Amount</th>'
       +'<th style="padding:10px 8px;text-align:right;font-weight:800">Invested</th>'
       +'<th style="padding:10px 8px;text-align:right;font-weight:800">Current Value</th>'
-      +'<th style="padding:10px 8px;text-align:left;font-weight:800">Suggestion</th>'
+      +'<th style="padding:10px 8px;text-align:left;font-weight:800">Suggestion — Switch To</th>'
       +'</tr></thead><tbody>';
     lossFunds.forEach((lf,i) => {
+      const suggestedFund = catSuggestions[lf.category] || 'Better fund in same category';
+      const savedSugg = (window._lossHarvestEdits && window._lossHarvestEdits[i]) || suggestedFund;
       html += '<tr style="border-bottom:1px solid #fecaca;background:'+(i%2?'#fff5f5':'#fff')+'">'
         +'<td style="padding:10px 12px;font-weight:700;color:#991b1b">'+escH(lf.name)+'</td>'
         +'<td style="padding:10px 8px;color:#64748b;font-weight:600">'+escH(lf.category)+'</td>'
         +'<td style="padding:10px 8px;text-align:right;font-weight:900;color:#dc2626;font-size:13px">-'+inr(lf.loss)+'</td>'
         +'<td style="padding:10px 8px;text-align:right">'+inr(lf.invested)+'</td>'
         +'<td style="padding:10px 8px;text-align:right">'+inr(lf.current)+'</td>'
-        +'<td style="padding:10px 8px;font-weight:700;color:#dc2626">📌 Book loss to offset gains. Switch to better fund.</td>'
+        +'<td style="padding:10px 8px"><div style="display:flex;align-items:center;gap:4px">'
+        +'<span style="font-weight:700;color:#065f46;font-size:10px">🔄</span>'
+        +'<input type="text" class="loss-harvest-suggestion" data-loss-idx="'+i+'" value="'+escH(savedSugg)+'" '
+        +'style="flex:1;font-size:10px;font-weight:700;color:var(--navy);border:1.5px solid #e2e8f0;border-radius:5px;padding:4px 8px;min-width:160px;background:#fff" '
+        +'placeholder="Search fund..." oninput="showLossFundSearch(this,'+i+')" onfocus="showLossFundSearch(this,'+i+')" onblur="setTimeout(()=>hideLossFundSearch('+i+'),200)">'
+        +'<div id="loss-fund-dd-'+i+'" style="display:none;position:absolute;z-index:999;background:#fff;border:2px solid var(--navy);border-radius:8px;max-height:150px;overflow-y:auto;width:260px;box-shadow:0 4px 12px rgba(0,0,0,.15)"></div>'
+        +'</div></td>'
         +'</tr>';
     });
     html += '</tbody></table></div></div>';
@@ -2355,6 +2378,55 @@ function toggleHarvestPlan() {
     body.style.display = 'none';
     icon.innerHTML = '&#9654;';
   }
+}
+
+// ═══ LOSS HARVEST FUND SEARCH ═══
+window._lossHarvestEdits = window._lossHarvestEdits || {};
+
+function showLossFundSearch(input, idx) {
+  const q = input.value.toLowerCase().trim();
+  const dd = document.getElementById('loss-fund-dd-' + idx);
+  if (!dd || q.length < 1) { if(dd) dd.style.display='none'; return; }
+
+  // Position dropdown below input
+  const rect = input.getBoundingClientRect();
+  dd.style.position = 'fixed';
+  dd.style.top = (rect.bottom + 2) + 'px';
+  dd.style.left = rect.left + 'px';
+  dd.style.width = Math.max(rect.width, 260) + 'px';
+
+  // Search FUND_DB
+  const matches = (typeof FUND_DB !== 'undefined' ? FUND_DB : []).filter(f =>
+    f.name.toLowerCase().includes(q) || f.category.toLowerCase().includes(q) || (f.amc||'').toLowerCase().includes(q)
+  ).slice(0, 8);
+
+  if (matches.length === 0) { dd.style.display='none'; return; }
+
+  dd.innerHTML = matches.map(f =>
+    '<div onmousedown="selectLossFund('+idx+',this)" data-fund-name="'+escH(f.name)+'" '
+    +'style="padding:8px 10px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:11px" '
+    +'onmouseover="this.style.background=\'#e8eef8\'" onmouseout="this.style.background=\'#fff\'">'
+    +'<div style="font-weight:700;color:var(--navy)">'+escH(f.name)+'</div>'
+    +'<div style="font-size:9px;color:#94a3b8">'+escH(f.category)+(f.ret?' · '+f.ret:'')+'</div>'
+    +'</div>'
+  ).join('');
+  dd.style.display = 'block';
+}
+
+function hideLossFundSearch(idx) {
+  const dd = document.getElementById('loss-fund-dd-' + idx);
+  if (dd) dd.style.display = 'none';
+  // Save current input value
+  const input = document.querySelector('.loss-harvest-suggestion[data-loss-idx="'+idx+'"]');
+  if (input) window._lossHarvestEdits[idx] = input.value;
+}
+
+function selectLossFund(idx, el) {
+  const name = el.getAttribute('data-fund-name');
+  const input = document.querySelector('.loss-harvest-suggestion[data-loss-idx="'+idx+'"]');
+  if (input) { input.value = name; window._lossHarvestEdits[idx] = name; }
+  const dd = document.getElementById('loss-fund-dd-' + idx);
+  if (dd) dd.style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════
