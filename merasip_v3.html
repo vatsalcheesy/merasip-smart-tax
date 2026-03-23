@@ -1591,103 +1591,83 @@ function parsePortfolioText(txt) {
     if(firstNums.length < 8) continue;
 
     let sensex=0, invested=0, current=0, totalUnits=0, latestNAV=0;
-    // First number > 10000 is likely sensex, next is invested
+
+    // === PRIMARY: Parse from HEADER ROW (most reliable) ===
+    // CAS header format after "(NNN Days)":
+    // sensex invested divR UNITS(4dec) PRICE NAV date CURRENT_VALUE divRein divPaid TOTAL GAIN ABS% XIRR%
+    // Example: 52579 47,997.60 0.00 3,080.6810 15.5802 19.6600 17-Mar 60,566.19 0.00 0.00 60,566.19 12,568.59 26.19% 5.55%
+
     let idx = 0;
     if(firstNums[0] > 10000) { sensex = firstNums[0]; idx = 1; }
     invested = firstNums[idx];
-    // Units & NAV from summary row after (NNN Days):
-    // Summary: sensex invested divr UNITS PRICE CUR_NAV DATE CUR_VALUE
-    // Find units by looking for 4-decimal numbers in raw text
-    const fourDecNums = afterDays.match(/[\d,]+\.\d{4}/g);
-    if(fourDecNums && fourDecNums.length >= 1) {
-      const u = parseNum(fourDecNums[0]);
-      if(u > 0.1 && u < 500000) {
-        totalUnits = u;
-        // Next two numbers after units in firstNums are price and NAV
-        // Find this unit value's position in firstNums
-        for(let fi=0; fi<firstNums.length; fi++) {
-          if(Math.abs(firstNums[fi] - u) < 0.001) {
-            // fi+1 = price, fi+2 = current NAV
-            if(fi+2 < firstNums.length) {
-              const navC = firstNums[fi+2];
-              if(navC > 1 && navC < 100000) latestNAV = navC;
-            }
-            break;
+
+    // Find the 4-decimal number in the header = UNITS
+    // It appears after invested and divR(0.00)
+    const rawNumsInHeader = afterDays.match(/[\d,]+\.\d{1,4}/g) || [];
+    let headerUnitIdx = -1;
+    for(let hi=0; hi<rawNumsInHeader.length; hi++) {
+      const parts = rawNumsInHeader[hi].split('.');
+      if(parts[1] && parts[1].length === 4) {
+        const val = parseNum(rawNumsInHeader[hi]);
+        if(val > 0.01 && val < 500000) {
+          totalUnits = val;
+          headerUnitIdx = hi;
+          // Next number = avg price, number after that = current NAV
+          if(hi+1 < rawNumsInHeader.length) {
+            // avgPrice - skip
           }
+          if(hi+2 < rawNumsInHeader.length) {
+            const navC = parseNum(rawNumsInHeader[hi+2]);
+            if(navC > 1 && navC < 100000) latestNAV = navC;
+          }
+          break;
         }
       }
     }
 
-    // Find the "Total" line in this block for reliable invested/current/units
+    // Current value: find number after the date pattern (dd-Mon) in header
+    const dateNavMatch = afterDays.match(/\d{1,2}-[A-Z][a-z]{2}\s+([\d,]+\.\d{2})/);
+    if(dateNavMatch) {
+      current = parseNum(dateNavMatch[1]);
+    }
+
+    console.log('[MeraSIP] Fund:', fb.name, 'Header parse → Units:', totalUnits, 'NAV:', latestNAV, 'Invested:', invested, 'Current:', current);
+
+    // === SECONDARY: Parse from TOTAL ROW (backup/override) ===
     const totalMatch = blockText.match(/Total\s+([\d,]+\.?\d*)\s/);
     if(totalMatch) {
       const tInv = parseNum(totalMatch[1]);
       if(tInv > 0) invested = tInv;
     }
-    // Extract units from Total row — CAS format varies
-    // Common patterns in Total row: invested stamp tds avgPrice units cummUnits curValue ...
+
+    // Total row format: invested(0) stamp(1) tds(2) divR(3) avgPrice(4) units(5) cummUnits(6) ... curValue gain abs xirr
     const totalRowMatch = blockText.match(/Total[\s\S]{0,600}/);
     if(totalRowMatch) {
-      const trText = totalRowMatch[0];
-      const trNums = trText.match(/[\d,]+\.\d{1,4}/g);
-      console.log('[MeraSIP DEBUG] Fund:', fb.name, 'Total row nums:', trNums);
-      if(trNums && trNums.length >= 5) {
-        // Strategy 1: Find pairs of 4-decimal numbers (units = cumm_units)
-        let found = false;
+      const trNums = totalRowMatch[0].match(/[\d,]+\.\d{1,4}/g);
+      if(trNums && trNums.length >= 7) {
+        // Find paired 4-decimal numbers (units = cummUnits)
         for(let ti=1; ti<trNums.length-1; ti++) {
           const a = parseNum(trNums[ti]), b = parseNum(trNums[ti+1]);
-          if(trNums[ti].includes('.') && trNums[ti].split('.')[1].length === 4
-            && trNums[ti+1].includes('.') && trNums[ti+1].split('.')[1].length === 4
+          if(trNums[ti].split('.')[1]?.length === 4
+            && trNums[ti+1].split('.')[1]?.length === 4
             && Math.abs(a - b) < 0.01 && a > 0 && a < 500000) {
-            totalUnits = a;
-            if(ti > 0) {
-              const navCandidate = parseNum(trNums[ti-1]);
-              if(navCandidate > 1 && navCandidate < 10000) latestNAV = navCandidate;
+            totalUnits = a;  // Override with Total row (most reliable)
+            // avgPrice is right before units
+            if(ti >= 1) {
+              const priceCandidate = parseNum(trNums[ti-1]);
+              if(priceCandidate > 1 && priceCandidate < 10000) {
+                // NAV can be derived: current / units
+              }
             }
-            found = true;
             break;
           }
         }
-        // Strategy 2: Look for 4-decimal number followed by same value (looser match)
-        if(!found) {
-          for(let ti=0; ti<trNums.length-1; ti++) {
-            const a = parseNum(trNums[ti]), b = parseNum(trNums[ti+1]);
-            const aHas4 = trNums[ti].includes('.') && trNums[ti].split('.')[1].length >= 3;
-            const bHas4 = trNums[ti+1].includes('.') && trNums[ti+1].split('.')[1].length >= 3;
-            if(aHas4 && bHas4 && Math.abs(a - b) < 0.1 && a > 0.01 && a < 500000) {
-              totalUnits = a;
-              if(ti > 0) {
-                const navCandidate = parseNum(trNums[ti-1]);
-                if(navCandidate > 1 && navCandidate < 10000) latestNAV = navCandidate;
-              }
-              found = true;
-              break;
-            }
-          }
-        }
-        // Strategy 3: Use index-based approach (Total row: invested(0) 0.00(1) stamp(2) tds(3) price(4) units(5) cummUnits(6))
-        if(!found && trNums.length >= 7) {
-          const u5 = parseNum(trNums[5]), u6 = parseNum(trNums[6]);
-          if(u5 > 0 && u5 < 500000 && Math.abs(u5 - u6) < 1) {
-            totalUnits = u5;
-            found = true;
-          }
-        }
-        // Strategy 4: If invested and current are known, find units by dividing
-        // This is a last resort
-        console.log('[MeraSIP DEBUG] Fund:', fb.name, 'Units found:', totalUnits, 'NAV:', latestNAV);
+        console.log('[MeraSIP] Fund:', fb.name, 'Total row → Units:', totalUnits, 'Total row nums:', trNums);
       }
     }
-    // Also try to get NAV from the summary header row (before Total)
-    // Summary: invested 0.00 UNITS PRICE CUR_NAV DATE CUR_VALUE
+    // Derive NAV from current/units if not found
     if(latestNAV === 0 && totalUnits > 0 && current > 0) {
       latestNAV = Math.round((current / totalUnits) * 10000) / 10000;
-    }
-
-    // Current value: look for pattern after "17-Mar" or "16-Mar" or similar
-    const curValMatch = afterDays.match(/\d{1,2}-[A-Z][a-z]{2}\s+([\d,]+\.\d{2})/);
-    if(curValMatch) {
-      current = parseNum(curValMatch[1]);
     }
 
     // Fallback: find current in Total row
