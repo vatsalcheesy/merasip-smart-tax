@@ -1607,14 +1607,18 @@ function parsePortfolioText(txt) {
     // === STEP 2: TOTAL ROW is PRIMARY source for units (most reliable) ===
     // Total row format: invested stamp tds divR avgPrice UNITS CUMM_UNITS curValue ...
     // Units & cummUnits are always paired 4-decimal numbers with same value
-    const totalMatch = blockText.match(/Total\s+([\d,]+\.?\d*)\s/);
-    if(totalMatch) {
-      const tInv = parseNum(totalMatch[1]);
+    // Get invested from the LAST Total row (skip column headers like "Total Gain")
+    const totalInvMatches = [...blockText.matchAll(/Total\s+([\d,]+\.\d{1,4})/g)];
+    if(totalInvMatches.length > 0) {
+      const lastTotalInv = totalInvMatches[totalInvMatches.length - 1];
+      const tInv = parseNum(lastTotalInv[1]);
       if(tInv > 0) invested = tInv;
     }
 
-    // Search for Total row — expand search area
-    const totalRowMatch = blockText.match(/Total[\s\S]{0,800}/);
+    // Search for LAST "Total" followed by numbers (the summary Total row)
+    // Skip "Total Gain" column headers — look for "Total" followed by a number (invested amount)
+    const totalMatches = [...blockText.matchAll(/Total\s+([\d,]+\.\d{1,4})/g)];
+    const totalRowMatch = totalMatches.length > 0 ? { 0: blockText.slice(totalMatches[totalMatches.length-1].index, totalMatches[totalMatches.length-1].index + 800) } : null;
     if(totalRowMatch) {
       const trAllNums = totalRowMatch[0].match(/[\d,]+\.\d{1,4}/g);
       if(trAllNums && trAllNums.length >= 5) {
