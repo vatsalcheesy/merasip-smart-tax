@@ -722,8 +722,8 @@ function buildFundRow(i, f, r) {
       +'<div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;font-size:11px">'
         +'<span style="color:var(--ink3)">Gain: <b style="color:'+gc(gain)+'">'+inr(gain,true)+' ('+pct(gainPct,true)+')</b></span>'
         +'<span style="color:var(--ink3)">Holding: <b style="color:'+holdingCol+'">'+holdingStr+'</b></span>'
-        +(f.units>0?'<span style="color:var(--ink3)">Units: <b style="color:var(--navy)">'+f.units.toFixed(4)+'</b></span>':'')
-        +(f.nav>0?'<span style="color:var(--ink3)">NAV: <b style="color:var(--navy)">₹'+f.nav.toFixed(2)+'</b></span>':'')
+        +'<span style="color:var(--ink3)">Units: <input type="number" step="0.0001" value="'+(f.units||0).toFixed(4)+'" style="width:90px;font-size:11px;font-weight:700;color:var(--navy);border:1px solid #ddd;border-radius:4px;padding:2px 4px;background:#f8fafc" oninput="updateFund('+i+',\'units\',parseFloat(this.value)||0)"></span>'
+        +'<span style="color:var(--ink3)">NAV: ₹<input type="number" step="0.01" value="'+(f.nav||0).toFixed(2)+'" style="width:80px;font-size:11px;font-weight:700;color:var(--navy);border:1px solid #ddd;border-radius:4px;padding:2px 4px;background:#f8fafc" oninput="updateFund('+i+',\'nav\',parseFloat(this.value)||0)"></span>'
         +(gain>0&&r.action.includes("HARVEST")?'<span style="font-weight:700;color:var(--green)">💰 Tax-free: '+inr(Math.min(gain,Math.max(0,LTCG_LIMIT-getClient().ltcg)))+'</span>':"")
         +(r.action.includes("LOSS")?'<span style="font-weight:700;color:var(--red)">📉 Loss offset: '+inr(Math.abs(gain))+'</span>':"")
       +'</div>'
@@ -1624,35 +1624,58 @@ function parsePortfolioText(txt) {
       const tInv = parseNum(totalMatch[1]);
       if(tInv > 0) invested = tInv;
     }
-    // Extract units from Total row
-    // Format: Total invested(0) divr(1) stamp(2) tds(3) price(4) units(5) cumm_units(6) curvalue(7)...
-    const totalRowMatch = blockText.match(/Total[\s\S]{0,400}/);
+    // Extract units from Total row — CAS format varies
+    // Common patterns in Total row: invested stamp tds avgPrice units cummUnits curValue ...
+    const totalRowMatch = blockText.match(/Total[\s\S]{0,600}/);
     if(totalRowMatch) {
-      const trNums = totalRowMatch[0].match(/[\d,]+\.\d{1,4}/g);
-      if(trNums && trNums.length >= 7) {
-        // Find units: look for 4-decimal numbers that appear twice in a row (units = cumm_units)
+      const trText = totalRowMatch[0];
+      const trNums = trText.match(/[\d,]+\.\d{1,4}/g);
+      console.log('[MeraSIP DEBUG] Fund:', fb.name, 'Total row nums:', trNums);
+      if(trNums && trNums.length >= 5) {
+        // Strategy 1: Find pairs of 4-decimal numbers (units = cumm_units)
+        let found = false;
         for(let ti=1; ti<trNums.length-1; ti++) {
           const a = parseNum(trNums[ti]), b = parseNum(trNums[ti+1]);
-          // Units and cumm_units should be equal (or very close) and have 4 decimals
           if(trNums[ti].includes('.') && trNums[ti].split('.')[1].length === 4
             && trNums[ti+1].includes('.') && trNums[ti+1].split('.')[1].length === 4
             && Math.abs(a - b) < 0.01 && a > 0 && a < 500000) {
             totalUnits = a;
-            // Price/NAV is right before units
             if(ti > 0) {
               const navCandidate = parseNum(trNums[ti-1]);
               if(navCandidate > 1 && navCandidate < 10000) latestNAV = navCandidate;
             }
+            found = true;
             break;
           }
         }
-        // Fallback: if no matching pair found, try index 5 and 6
-        if(totalUnits === 0 && trNums.length >= 7) {
+        // Strategy 2: Look for 4-decimal number followed by same value (looser match)
+        if(!found) {
+          for(let ti=0; ti<trNums.length-1; ti++) {
+            const a = parseNum(trNums[ti]), b = parseNum(trNums[ti+1]);
+            const aHas4 = trNums[ti].includes('.') && trNums[ti].split('.')[1].length >= 3;
+            const bHas4 = trNums[ti+1].includes('.') && trNums[ti+1].split('.')[1].length >= 3;
+            if(aHas4 && bHas4 && Math.abs(a - b) < 0.1 && a > 0.01 && a < 500000) {
+              totalUnits = a;
+              if(ti > 0) {
+                const navCandidate = parseNum(trNums[ti-1]);
+                if(navCandidate > 1 && navCandidate < 10000) latestNAV = navCandidate;
+              }
+              found = true;
+              break;
+            }
+          }
+        }
+        // Strategy 3: Use index-based approach (Total row: invested(0) 0.00(1) stamp(2) tds(3) price(4) units(5) cummUnits(6))
+        if(!found && trNums.length >= 7) {
           const u5 = parseNum(trNums[5]), u6 = parseNum(trNums[6]);
           if(u5 > 0 && u5 < 500000 && Math.abs(u5 - u6) < 1) {
             totalUnits = u5;
+            found = true;
           }
         }
+        // Strategy 4: If invested and current are known, find units by dividing
+        // This is a last resort
+        console.log('[MeraSIP DEBUG] Fund:', fb.name, 'Units found:', totalUnits, 'NAV:', latestNAV);
       }
     }
     // Also try to get NAV from the summary header row (before Total)
