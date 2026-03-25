@@ -1388,7 +1388,7 @@ function renderReportHarvestPlan(cl, results) {
     let action='Switch / Rebuy';
     let switchTo=catLbl+' fund ('+amcN+' or better)';
     const fU=f.units||0;
-    const curNAV=fU>0?f.current/fU:(f.nav||0);
+    const curNAV=f.nav>0?f.nav:(fU>0?f.current/fU:0);
     // FIFO calculation
     let exUnits=0,sellVal=0,costB=0,gainAcc=0;
     const txns=(f.fifoTxns||[]).filter(t=>t.units>0&&t.days>=365);
@@ -2100,7 +2100,7 @@ function generateHarvestPlan() {
     const amountNeeded = Math.min(f.gain, remainingExemption - filled);
 
     const fUnits = f.units || 0;
-    const currentNAV = fUnits > 0 ? f.current / fUnits : (f.nav || 0);
+    const currentNAV = f.nav > 0 ? f.nav : (fUnits > 0 ? f.current / fUnits : 0);
 
     // FIFO: iterate oldest transactions first, accumulate gain until target
     let exactUnits = 0;
@@ -3217,7 +3217,7 @@ function computeHarvestPlan(selectedIndices) {
     const amountNeeded = Math.min(f.gain, remainingExemption - filled);
 
     const fUnits = f.units || 0;
-    const currentNAV = fUnits > 0 ? f.current / fUnits : (f.nav || 0);
+    const currentNAV = f.nav > 0 ? f.nav : (fUnits > 0 ? f.current / fUnits : 0);
 
     let exactUnits = 0;
     let sellValue = 0;
