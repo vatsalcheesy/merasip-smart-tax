@@ -86,6 +86,14 @@ td{padding:7px 8px;border-bottom:1px solid var(--border)}
   #harvest-plan-container .card{break-inside:avoid;border:1px solid #333!important}
   #harvest-plan-container table{font-size:10px}
   #harvest-plan-container th,#harvest-plan-container td{padding:4px 6px!important}
+  /* Harvest wizard print styles */
+  .harvest-wizard-btn{display:none!important}
+  .fund-search-input{border:none!important;background:transparent!important;padding:0!important;font-weight:700!important}
+  .harvest-dd{display:none!important}
+  #harvest-report-content select{display:none!important}
+  #harvest-report-content input[type=text]{border:none!important;background:transparent!important;padding:0!important}
+  .screen.active{min-height:auto!important}
+  .nav{position:relative!important}
 }
 </style>
 </head>
@@ -181,7 +189,7 @@ td{padding:7px 8px;border-bottom:1px solid var(--border)}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
         <div><div style="font-size:14px;font-weight:800;color:var(--navy)">🤖 Full Portfolio Advisory</div><div style="font-size:11px;color:var(--ink3)">AI-powered with Trustner fund recommendations</div></div>
         <button class="btn btn-primary" id="group-ai-btn" onclick="runGroupAI()">Generate Advisory</button>
-        <button class="btn btn-amber" onclick="generateHarvestPlan()" style="margin-left:6px">📊 Tax Harvest Plan</button>
+        <button class="btn btn-amber" onclick="showScreen('harvest-select')" style="margin-left:6px">📊 Tax Harvest Wizard</button>
       </div>
       <div id="group-ai-status" class="hidden" style="background:var(--navyP);border-radius:8px;padding:12px;font-size:12px;color:var(--navy);font-weight:600"></div>
       <div id="group-ai-result" style="display:none;font-size:13px;line-height:1.85;color:var(--ink);white-space:pre-wrap;font-family:Georgia,serif;border-top:1px solid var(--border);padding-top:10px;margin-top:8px"></div>
@@ -226,6 +234,52 @@ td{padding:7px 8px;border-bottom:1px solid var(--border)}
       <div style="font-size:10px;color:var(--ink3);font-style:italic;max-width:700px;margin:0 auto;line-height:1.6">Mutual fund investments are subject to market risks. Read all scheme related documents carefully. AMFI Registered MFD, not SEBI RIA. Tax advice is advisory in nature.</div>
     </div>
   </div>
+</div>
+
+<!-- HARVEST WIZARD: SCREEN 1 — Fund Selection -->
+<div id="screen-harvest-select" class="screen">
+  <div class="nav no-print">
+    <div class="flex"><span class="nav-brand">MeraSIP</span><span class="nav-title">Tax Harvest Wizard — Step 1 of 3: Select Funds</span></div>
+    <div class="nav-actions">
+      <button class="btn btn-outline btn-sm" onclick="showScreen('analysis')">← Back to Analysis</button>
+    </div>
+  </div>
+  <div style="max-width:1100px;margin:0 auto;padding:20px 14px">
+    <div id="harvest-select-summary" style="background:var(--navy);border-radius:10px;padding:14px 18px;margin-bottom:14px;color:#fff;display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px;font-weight:700"></div>
+    <div id="harvest-select-table" style="margin-bottom:14px"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-primary btn-lg" onclick="confirmHarvestSelect()">Confirm &amp; Calculate →</button>
+    </div>
+  </div>
+</div>
+
+<!-- HARVEST WIZARD: SCREEN 2 — Calculation -->
+<div id="screen-harvest-calc" class="screen">
+  <div class="nav no-print">
+    <div class="flex"><span class="nav-brand">MeraSIP</span><span class="nav-title">Tax Harvest Wizard — Step 2 of 3: Calculation</span></div>
+    <div class="nav-actions">
+      <button class="btn btn-outline btn-sm" onclick="showScreen('harvest-select')">← Back</button>
+    </div>
+  </div>
+  <div style="max-width:1100px;margin:0 auto;padding:20px 14px">
+    <div id="harvest-calc-content"></div>
+    <div style="display:flex;justify-content:space-between;gap:8px;margin-top:14px">
+      <button class="btn btn-outline btn-lg" onclick="showScreen('harvest-select')">← Back</button>
+      <button class="btn btn-success btn-lg" onclick="showScreen('harvest-report')">Generate Report →</button>
+    </div>
+  </div>
+</div>
+
+<!-- HARVEST WIZARD: SCREEN 3 — Final Report -->
+<div id="screen-harvest-report" class="screen">
+  <div class="nav no-print">
+    <div class="flex"><span class="nav-brand">MeraSIP</span><span class="nav-title">Tax Harvest Wizard — Step 3 of 3: Report</span></div>
+    <div class="nav-actions">
+      <button class="btn btn-outline btn-sm" onclick="showScreen('harvest-calc')">← Back</button>
+      <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print</button>
+    </div>
+  </div>
+  <div style="max-width:1000px;margin:0 auto;padding:20px 14px" id="harvest-report-content"></div>
 </div>
 
 <!-- UPLOAD MODAL -->
@@ -387,6 +441,10 @@ let remarks = {};
 let portResults = [];
 let extractedPreview = null;
 let groupRemark = "";
+let harvestSelections = {};
+let mfapiCache = {};
+let mfapiSchemes = null;
+let lastHarvestResult = null;
 
 function newFund() {
   const d = new Date(); d.setFullYear(d.getFullYear()-2);
@@ -608,6 +666,9 @@ function showScreen(id) {
   if(id==='data') renderFunds();
   if(id==='analysis') renderAnalysis();
   if(id==='report') renderReport();
+  if(id==='harvest-select') renderHarvestSelect();
+  if(id==='harvest-calc') renderHarvestCalc();
+  if(id==='harvest-report') renderHarvestReport();
   window.scrollTo(0,0);
 }
 
@@ -2814,6 +2875,733 @@ function refreshReinvestTables() {
     const tbodyEl = el.querySelector('tbody');
     if (tbodyEl) tbodyEl.innerHTML = tbody;
   });
+}
+
+// ═══════════════════════════════════════════════
+// MFAPI INTEGRATION
+// ═══════════════════════════════════════════════
+async function loadMFAPISchemes() {
+  if (mfapiSchemes) return mfapiSchemes;
+  try {
+    const res = await fetch('https://portal.amfiindia.com/spages/NAVAll.txt');
+    const txt = await res.text();
+    const schemes = [];
+    txt.split('\n').forEach(line => {
+      const parts = line.split(';');
+      if (parts.length >= 5 && !isNaN(parts[0].trim())) {
+        schemes.push({
+          code: parts[0].trim(),
+          isin: parts[1].trim(),
+          name: parts[3].trim(),
+          nav: parseFloat(parts[4]) || 0,
+          date: parts[5]?.trim() || ''
+        });
+      }
+    });
+    mfapiSchemes = schemes;
+    return schemes;
+  } catch(e) {
+    console.warn('MFAPI offline, using local FUND_DB');
+    return [];
+  }
+}
+
+function searchMFSchemes(query) {
+  if (!mfapiSchemes || !query || query.length < 2) return [];
+  const q = query.toLowerCase();
+  const words = q.split(/\s+/).filter(w => w.length >= 2);
+  return mfapiSchemes.filter(s => {
+    const n = s.name.toLowerCase();
+    return words.every(w => n.includes(w));
+  }).filter(s => s.name.toLowerCase().includes('growth') || s.name.toLowerCase().includes('direct'))
+    .slice(0, 10);
+}
+
+// ═══════════════════════════════════════════════
+// GENERALIZED AUTOCOMPLETE (fund-search-input)
+// ═══════════════════════════════════════════════
+function _fsShow(inp) {
+  _fsClose();
+  const q = inp.value.trim().toLowerCase();
+  if (q.length < 2) return;
+
+  const words = q.split(/\s+/);
+
+  // Search local FUND_DB first
+  let matches = FUND_DB.filter(f => {
+    const name = f.n.toLowerCase();
+    return words.every(w => name.includes(w));
+  });
+  if (matches.length === 0) {
+    matches = FUND_DB.filter(f => {
+      const name = f.n.toLowerCase();
+      return words.some(w => w.length >= 3 && name.includes(w));
+    });
+  }
+  matches.sort((a, b) => {
+    const aExact = words.every(w => a.n.toLowerCase().includes(w)) ? 0 : 1;
+    const bExact = words.every(w => b.n.toLowerCase().includes(w)) ? 0 : 1;
+    return aExact - bExact || a.n.length - b.n.length;
+  });
+
+  // Also search MFAPI if available
+  const mfResults = searchMFSchemes(q);
+  // Merge: local first, then MFAPI (deduplicated)
+  const localNames = new Set(matches.map(m => m.n.toLowerCase()));
+  mfResults.forEach(s => {
+    if (!localNames.has(s.name.toLowerCase())) {
+      matches.push({ n: s.name, c: '', r: s.nav > 0 ? 'NAV: '+s.nav.toFixed(2) : '', _mfapi: s });
+    }
+  });
+  matches = matches.slice(0, 12);
+
+  if (matches.length === 0) return;
+
+  const dd = document.createElement('div');
+  dd.className = 'harvest-dd';
+  dd.style.cssText = 'position:absolute;left:0;right:0;top:100%;background:#fff;border:2px solid var(--navy);border-top:none;border-radius:0 0 10px 10px;box-shadow:0 10px 30px rgba(0,0,0,.2);z-index:9999;max-height:250px;overflow-y:auto';
+
+  matches.forEach((m, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:8px 12px;cursor:pointer;border-bottom:1px solid #f0f0f0;background:#fff;transition:background .08s;font-size:11px';
+    let displayName = escH(m.n);
+    words.forEach(w => {
+      if (w.length >= 2) {
+        const re = new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+        displayName = displayName.replace(re, '<mark style="background:#fef08a;padding:0 1px;border-radius:2px">$1</mark>');
+      }
+    });
+    row.innerHTML = '<div style="font-weight:700;color:var(--navy)">' + displayName + '</div>'
+      + (m.c || m.r ? '<div style="display:flex;gap:6px;margin-top:2px">'
+        + (m.c ? '<span style="font-size:9px;background:#f1f5f9;padding:2px 6px;border-radius:4px;color:#475569;font-weight:700">' + escH(m.c) + '</span>' : '')
+        + (m.r ? '<span style="font-size:9px;background:#d1fae5;padding:2px 6px;border-radius:4px;color:#065f46;font-weight:800">' + escH(m.r) + '</span>' : '')
+        + '</div>' : '');
+
+    row.onmouseenter = () => row.style.background = '#e8eef8';
+    row.onmouseleave = () => row.style.background = '#fff';
+    row.onclick = (e) => {
+      e.stopPropagation();
+      inp.value = m.n;
+      inp.dataset.fundCat = m.c || '';
+      inp.dataset.fundRet = m.r || '';
+      if (m._mfapi) {
+        inp.dataset.mfapiNav = m._mfapi.nav || '';
+        inp.dataset.mfapiCode = m._mfapi.code || '';
+      }
+      inp.dispatchEvent(new Event('fundselected', { bubbles: true }));
+      _fsClose();
+    };
+    dd.appendChild(row);
+  });
+
+  const wrapper = inp.parentElement;
+  wrapper.style.position = 'relative';
+  wrapper.appendChild(dd);
+}
+
+function _fsClose() {
+  document.querySelectorAll('.harvest-dd').forEach(d => d.remove());
+}
+
+// Event delegation for fund-search-input
+document.addEventListener('input', function(e) {
+  if (e.target && e.target.classList.contains('fund-search-input')) {
+    _fsShow(e.target);
+  }
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.target && e.target.classList.contains('fund-search-input')) {
+    const dd = e.target.parentElement.querySelector('.harvest-dd');
+    if (!dd) return;
+    const items = Array.from(dd.children);
+    let idx = items.findIndex(r => r.style.background === 'rgb(232, 238, 248)');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      idx = Math.min(idx + 1, items.length - 1);
+      items.forEach((r, i) => r.style.background = i === idx ? '#e8eef8' : '#fff');
+      if (items[idx]) items[idx].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      idx = Math.max(idx - 1, 0);
+      items.forEach((r, i) => r.style.background = i === idx ? '#e8eef8' : '#fff');
+      if (items[idx]) items[idx].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' && idx >= 0 && items[idx]) {
+      e.preventDefault();
+      items[idx].click();
+    } else if (e.key === 'Escape') {
+      _fsClose();
+    }
+  }
+});
+
+document.addEventListener('click', function(e) {
+  if (!e.target.classList.contains('fund-search-input')) {
+    _fsClose();
+  }
+});
+
+// ═══════════════════════════════════════════════
+// HARVEST WIZARD — PAGE 1: FUND SELECTION
+// ═══════════════════════════════════════════════
+function renderHarvestSelect() {
+  const cl = getClient();
+  const remainingExemption = Math.max(0, LTCG_LIMIT - cl.ltcg);
+  const {results} = analysePortfolio(funds, cl.ltcg);
+  portResults = results;
+
+  // Pre-select eligible funds with greedy fill
+  const eligible = [];
+  funds.forEach((f, i) => {
+    const isEquity = EQUITY_CATS.includes(f.category);
+    const yrs = holdingYears(f.purchaseDate);
+    const gain = f.current - f.invested;
+    const hasLTCG = yrs >= 1 && gain > 0 && isEquity;
+    eligible.push({ idx: i, isEquity, yrs, gain, hasLTCG, ltcg: hasLTCG ? gain : 0, stcg: (yrs < 1 && gain > 0 && isEquity) ? gain : 0 });
+  });
+
+  // Greedy: sort by gain descending, fill exemption
+  const sortedEligible = eligible.filter(e => e.hasLTCG).sort((a, b) => b.gain - a.gain);
+  let filled = 0;
+  harvestSelections = {};
+  for (const e of sortedEligible) {
+    if (filled >= remainingExemption) break;
+    harvestSelections[e.idx] = true;
+    filled += Math.min(e.gain, remainingExemption - filled);
+  }
+
+  // Build summary bar
+  const selCount = Object.keys(harvestSelections).length;
+  const selLTCG = Object.keys(harvestSelections).reduce((s, i) => {
+    const f = funds[i];
+    return s + Math.max(0, f.current - f.invested);
+  }, 0);
+  const room = Math.max(0, remainingExemption - Math.min(selLTCG, remainingExemption));
+
+  const summaryEl = document.getElementById('harvest-select-summary');
+  summaryEl.innerHTML = '<span>Selected <b>' + selCount + '</b> funds</span>'
+    + '<span style="margin-left:auto">LTCG: <b>' + inr(Math.min(selLTCG, remainingExemption)) + '</b></span>'
+    + '<span>Room: <b>' + inr(room) + '</b></span>'
+    + '<span>Exemption: <b>' + inr(LTCG_LIMIT) + '</b></span>'
+    + '<span>Already realised: <b>' + inr(cl.ltcg) + '</b></span>';
+
+  // Build table
+  let html = '<div style="overflow-x:auto;border-radius:10px;border:2px solid #e2e8f0">'
+    + '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+    + '<thead><tr style="background:linear-gradient(135deg,#0f2b46,#1B3A6B);color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:.5px">'
+    + '<th style="padding:10px 10px;text-align:left;font-weight:800">Fund Name</th>'
+    + '<th style="padding:10px 6px;text-align:left;font-weight:800">Category</th>'
+    + '<th style="padding:10px 6px;text-align:right;font-weight:800">Invested</th>'
+    + '<th style="padding:10px 6px;text-align:right;font-weight:800">Current</th>'
+    + '<th style="padding:10px 6px;text-align:right;font-weight:800">Gain</th>'
+    + '<th style="padding:10px 6px;text-align:right;font-weight:800">LTCG</th>'
+    + '<th style="padding:10px 6px;text-align:right;font-weight:800">STCG</th>'
+    + '<th style="padding:10px 6px;text-align:center;font-weight:800">Holding</th>'
+    + '<th style="padding:10px 6px;text-align:center;font-weight:800;color:#86EFAC">Harvest?</th>'
+    + '</tr></thead><tbody>';
+
+  funds.forEach((f, i) => {
+    const e = eligible[i];
+    const isEquity = e.isEquity;
+    const yrs = e.yrs;
+    const gain = e.gain;
+    const ltcg = e.ltcg;
+    const stcg = e.stcg;
+    const holdStr = yrs >= 1 ? yrs.toFixed(1) + 'y' : (yrs > 0 ? (yrs * 12).toFixed(0) + 'm' : '—');
+    const canHarvest = e.hasLTCG;
+    const isSelected = !!harvestSelections[i];
+
+    html += '<tr style="border-bottom:1px solid #f0f0f0;background:' + (isSelected ? '#f0fdf4' : (i % 2 ? '#f8fafc' : '#fff')) + '">'
+      + '<td style="padding:8px 10px;max-width:200px"><div style="font-weight:700;color:var(--navy);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + escH(f.name) + '">' + escH(f.name || 'Fund ' + (i + 1)) + '</div></td>'
+      + '<td style="padding:8px 6px;font-size:10px;color:#64748b;font-weight:600">' + getCatLabel(f.category) + '</td>'
+      + '<td style="padding:8px 6px;text-align:right">' + inr(f.invested) + '</td>'
+      + '<td style="padding:8px 6px;text-align:right">' + inr(f.current) + '</td>'
+      + '<td style="padding:8px 6px;text-align:right;color:' + gc(gain) + ';font-weight:700">' + inr(gain, true) + '</td>'
+      + '<td style="padding:8px 6px;text-align:right;color:' + (ltcg > 0 ? 'var(--green)' : '#94a3b8') + ';font-weight:700">' + (ltcg > 0 ? inr(ltcg) : '—') + '</td>'
+      + '<td style="padding:8px 6px;text-align:right;color:' + (stcg > 0 ? 'var(--amber)' : '#94a3b8') + ';font-weight:700">' + (stcg > 0 ? inr(stcg) : '—') + '</td>'
+      + '<td style="padding:8px 6px;text-align:center;font-size:10px;color:' + (yrs >= 1 ? 'var(--green)' : 'var(--amber)') + ';font-weight:700">' + holdStr + '</td>'
+      + '<td style="padding:8px 6px;text-align:center">';
+
+    if (canHarvest) {
+      html += '<select onchange="toggleHarvestFund(' + i + ', this.value)" style="font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;border:1.5px solid ' + (isSelected ? '#16a34a' : '#d1d5db') + ';background:' + (isSelected ? '#f0fdf4' : '#fff') + ';color:' + (isSelected ? '#16a34a' : '#6b7280') + ';cursor:pointer">'
+        + '<option value="yes"' + (isSelected ? ' selected' : '') + '>Yes</option>'
+        + '<option value="no"' + (!isSelected ? ' selected' : '') + '>No</option>'
+        + '</select>';
+    } else {
+      html += '<span style="font-size:10px;color:#94a3b8;font-weight:600">N/A</span>';
+    }
+
+    html += '</td></tr>';
+  });
+
+  html += '</tbody></table></div>';
+  document.getElementById('harvest-select-table').innerHTML = html;
+}
+
+function toggleHarvestFund(idx, val) {
+  if (val === 'yes') {
+    harvestSelections[idx] = true;
+  } else {
+    delete harvestSelections[idx];
+  }
+  // Update summary bar only
+  updateHarvestSelectSummary();
+}
+
+function updateHarvestSelectSummary() {
+  const cl = getClient();
+  const remainingExemption = Math.max(0, LTCG_LIMIT - cl.ltcg);
+  const selIndices = Object.keys(harvestSelections).map(Number);
+  let selLTCG = 0;
+  selIndices.forEach(i => {
+    const f = funds[i];
+    selLTCG += Math.max(0, f.current - f.invested);
+  });
+  const capped = Math.min(selLTCG, remainingExemption);
+  const room = Math.max(0, remainingExemption - capped);
+  const summaryEl = document.getElementById('harvest-select-summary');
+  summaryEl.innerHTML = '<span>Selected <b>' + selIndices.length + '</b> funds</span>'
+    + '<span style="margin-left:auto">LTCG: <b>' + inr(capped) + '</b></span>'
+    + '<span>Room: <b>' + inr(room) + '</b></span>'
+    + '<span>Exemption: <b>' + inr(LTCG_LIMIT) + '</b></span>'
+    + '<span>Already realised: <b>' + inr(cl.ltcg) + '</b></span>';
+
+  // Also update row backgrounds
+  document.querySelectorAll('#harvest-select-table tbody tr').forEach((tr, i) => {
+    const sel = !!harvestSelections[i];
+    tr.style.background = sel ? '#f0fdf4' : (i % 2 ? '#f8fafc' : '#fff');
+    const selectEl = tr.querySelector('select');
+    if (selectEl) {
+      selectEl.style.borderColor = sel ? '#16a34a' : '#d1d5db';
+      selectEl.style.background = sel ? '#f0fdf4' : '#fff';
+      selectEl.style.color = sel ? '#16a34a' : '#6b7280';
+    }
+  });
+}
+
+function confirmHarvestSelect() {
+  const selIndices = Object.keys(harvestSelections).map(Number);
+  if (selIndices.length === 0) {
+    alert('Please select at least one fund to harvest.');
+    return;
+  }
+  lastHarvestResult = computeHarvestPlan(selIndices);
+  showScreen('harvest-calc');
+}
+
+// ═══════════════════════════════════════════════
+// HARVEST WIZARD — COMPUTE (pure data function)
+// ═══════════════════════════════════════════════
+function computeHarvestPlan(selectedIndices) {
+  const cl = getClient();
+  const remainingExemption = Math.max(0, LTCG_LIMIT - cl.ltcg);
+
+  // Filter to selected equity LTCG funds
+  const equityLTCGFunds = [];
+  selectedIndices.forEach(i => {
+    const f = funds[i];
+    if (!EQUITY_CATS.includes(f.category)) return;
+    const yrs = holdingYears(f.purchaseDate);
+    if (yrs < 1) return;
+    const gain = f.current - f.invested;
+    if (gain <= 0) return;
+    equityLTCGFunds.push({ ...f, idx: i, gain, yrs });
+  });
+  equityLTCGFunds.sort((a, b) => b.gain - a.gain);
+
+  // Greedily fill exemption with FIFO-based unit calculation
+  let filled = 0;
+  const harvestPlan = [];
+  for (const f of equityLTCGFunds) {
+    if (filled >= remainingExemption) break;
+    const amountNeeded = Math.min(f.gain, remainingExemption - filled);
+
+    const fUnits = f.units || 0;
+    const currentNAV = fUnits > 0 ? f.current / fUnits : (f.nav || 0);
+
+    let exactUnits = 0;
+    let sellValue = 0;
+    let costBasis = 0;
+    let gainAccum = 0;
+    const txns = (f.fifoTxns || []).filter(t => t.units > 0 && t.days >= 365);
+
+    if (txns.length > 0 && currentNAV > 0) {
+      txns.sort((a, b) => b.days - a.days);
+      for (const t of txns) {
+        if (gainAccum >= amountNeeded) break;
+        const unitGain = currentNAV - t.price;
+        if (unitGain <= 0) continue;
+        const remainingGain = amountNeeded - gainAccum;
+        const unitsNeeded = Math.min(remainingGain / unitGain, t.units);
+        exactUnits += unitsNeeded;
+        costBasis += unitsNeeded * t.price;
+        gainAccum += unitsNeeded * unitGain;
+      }
+      sellValue = exactUnits * currentNAV;
+    }
+
+    if (exactUnits === 0 && fUnits > 0) {
+      const avgCost = f.invested / fUnits;
+      const gainPerUnit = currentNAV - avgCost;
+      if (gainPerUnit > 0) {
+        exactUnits = Math.min(amountNeeded / gainPerUnit, fUnits);
+        sellValue = exactUnits * currentNAV;
+        costBasis = exactUnits * avgCost;
+      } else {
+        const fraction = amountNeeded / f.gain;
+        exactUnits = fraction * fUnits;
+        sellValue = fraction * f.current;
+        costBasis = fraction * f.invested;
+      }
+    }
+
+    const fraction = fUnits > 0 ? exactUnits / fUnits : 0;
+    let unitsToSellLabel = '';
+    if (exactUnits > 0) {
+      unitsToSellLabel = exactUnits.toFixed(3) + ' units';
+    } else {
+      unitsToSellLabel = (fraction * 100).toFixed(1) + '% of holding';
+    }
+
+    const amcName = f.name.split(' ')[0];
+    const catLabel = getCatLabel(f.category);
+
+    harvestPlan.push({
+      name: f.name,
+      category: catLabel,
+      ltcgToHarvest: amountNeeded,
+      unitsToSell: unitsToSellLabel,
+      fraction: fraction,
+      totalGain: f.gain,
+      invested: f.invested,
+      current: f.current,
+      action: 'Switch / Rebuy',
+      switchTo: catLabel + ' fund (' + amcName + ' or better)',
+      totalUnits: fUnits,
+      nav: currentNAV,
+      exactUnits: exactUnits,
+      sellValue: sellValue,
+      costBasis: costBasis,
+      pctOfHolding: (fraction * 100).toFixed(1),
+    });
+    filled += amountNeeded;
+  }
+
+  // Loss harvesting opportunities
+  const lossFunds = [];
+  funds.forEach((f, i) => {
+    const gain = f.current - f.invested;
+    if (gain < 0) {
+      lossFunds.push({ name: f.name, category: getCatLabel(f.category), loss: Math.abs(gain), invested: f.invested, current: f.current });
+    }
+  });
+
+  const taxSaved = Math.round(filled * 0.125);
+  const totalHarvested = filled;
+
+  return { harvestPlan, lossFunds, taxSaved, totalHarvested, remainingExemption };
+}
+
+// ═══════════════════════════════════════════════
+// HARVEST WIZARD — PAGE 2: CALCULATION
+// ═══════════════════════════════════════════════
+function renderHarvestCalc() {
+  if (!lastHarvestResult) return;
+  const { harvestPlan, lossFunds, taxSaved, totalHarvested, remainingExemption } = lastHarvestResult;
+  const cl = getClient();
+  const container = document.getElementById('harvest-calc-content');
+
+  let html = '';
+
+  // Summary cards
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">'
+    + [
+      [inr(LTCG_LIMIT), 'LTCG EXEMPTION', 'var(--navy)'],
+      [inr(cl.ltcg), 'ALREADY REALISED', 'var(--amber)'],
+      [inr(remainingExemption), 'ROOM LEFT', 'var(--green)'],
+      [inr(taxSaved), 'TAX SAVED @12.5%', 'var(--green)'],
+    ].map(([v, l, c]) => '<div style="background:#fff;border:2px solid #e2e8f0;border-radius:10px;padding:14px;text-align:center"><div style="font-size:20px;font-weight:900;color:' + c + '">' + v + '</div><div style="font-size:8px;color:var(--ink3);margin-top:4px;letter-spacing:.5px;font-weight:700">' + l + '</div></div>').join('')
+    + '</div>';
+
+  // Harvest table
+  if (harvestPlan.length > 0) {
+    html += '<div style="margin-bottom:18px">'
+      + '<div style="font-size:13px;font-weight:900;color:var(--navy);margin-bottom:10px">Step 1: Funds to Harvest (LTCG Tax-Free)</div>'
+      + '<div style="overflow-x:auto;border-radius:10px;border:2px solid #e2e8f0">'
+      + '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+      + '<thead><tr style="background:linear-gradient(135deg,#0f2b46,#1B3A6B);color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:.5px">'
+      + '<th style="padding:10px 10px;text-align:left;font-weight:800">Fund Name</th>'
+      + '<th style="padding:10px 6px;text-align:right;font-weight:800">Total Units</th>'
+      + '<th style="padding:10px 6px;text-align:right;font-weight:800">NAV</th>'
+      + '<th style="padding:10px 6px;text-align:right;font-weight:800">Total Gain</th>'
+      + '<th style="padding:10px 6px;text-align:right;font-weight:800">LTCG to Harvest</th>'
+      + '<th style="padding:10px 6px;text-align:right;font-weight:800;color:#86EFAC">Units to Sell</th>'
+      + '<th style="padding:10px 6px;text-align:right;font-weight:800">Sell Value</th>'
+      + '</tr></thead><tbody>';
+
+    let totalSellValue = 0;
+    harvestPlan.forEach((p, i) => {
+      totalSellValue += p.sellValue;
+      const hasUnits = p.exactUnits > 0;
+      html += '<tr style="border-bottom:1px solid #f0f0f0;background:' + (i % 2 ? '#f8fafc' : '#fff') + '">'
+        + '<td style="padding:10px 10px;max-width:200px"><div style="font-weight:700;color:var(--navy);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + escH(p.name) + '">' + escH(p.name) + '</div><div style="font-size:9px;color:#94a3b8;margin-top:1px">' + escH(p.category) + '</div></td>'
+        + '<td style="padding:10px 6px;text-align:right;color:#64748b;font-weight:600">' + (hasUnits ? p.totalUnits.toFixed(3) : '—') + '</td>'
+        + '<td style="padding:10px 6px;text-align:right;color:#64748b;font-weight:600">' + (p.nav > 0 ? p.nav.toFixed(2) : '—') + '</td>'
+        + '<td style="padding:10px 6px;text-align:right;color:#64748b;font-weight:600">' + inr(p.totalGain) + '</td>'
+        + '<td style="padding:10px 6px;text-align:right;font-weight:900;font-size:13px;color:#16a34a">' + inr(p.ltcgToHarvest) + '</td>'
+        + '<td style="padding:10px 6px;text-align:right;font-weight:900;font-size:12px;color:var(--navy);background:#e8eef820">'
+        + (hasUnits
+          ? '<div>' + p.exactUnits.toFixed(3) + '</div><div style="font-size:8px;color:#94a3b8;font-weight:600">' + p.pctOfHolding + '% of holding</div>'
+          : p.pctOfHolding + '%')
+        + '</td>'
+        + '<td style="padding:10px 6px;text-align:right;font-weight:700;color:var(--navy)">' + inr(p.sellValue) + '</td>'
+        + '</tr>';
+    });
+
+    // Total row
+    html += '<tr style="background:linear-gradient(135deg,#0f2b46,#1B3A6B);color:#fff;font-weight:900;font-size:11px">'
+      + '<td style="padding:12px 10px" colspan="4">TOTAL (' + harvestPlan.length + ' funds)</td>'
+      + '<td style="padding:12px 6px;text-align:right;color:#86EFAC;font-size:15px">' + inr(totalHarvested) + '</td>'
+      + '<td style="padding:12px 6px;text-align:right;color:#86EFAC;font-size:11px"></td>'
+      + '<td style="padding:12px 6px;text-align:right;color:#FCD34D">' + inr(totalSellValue) + '</td>'
+      + '</tr></tbody></table></div></div>';
+  }
+
+  // Loss harvesting
+  if (lossFunds.length > 0) {
+    html += '<div style="margin-bottom:18px">'
+      + '<div style="font-size:13px;font-weight:900;color:#dc2626;margin-bottom:10px">Step 2: Loss Harvesting Opportunities</div>'
+      + '<div style="overflow-x:auto;border-radius:10px;border:2px solid #fecaca">'
+      + '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+      + '<thead><tr style="background:#fef2f2;color:#991b1b;font-size:10px;text-transform:uppercase;letter-spacing:.5px">'
+      + '<th style="padding:10px 12px;text-align:left;font-weight:800">Fund</th>'
+      + '<th style="padding:10px 8px;text-align:left;font-weight:800">Category</th>'
+      + '<th style="padding:10px 8px;text-align:right;font-weight:800">Loss</th>'
+      + '<th style="padding:10px 8px;text-align:right;font-weight:800">Invested</th>'
+      + '<th style="padding:10px 8px;text-align:right;font-weight:800">Current</th>'
+      + '</tr></thead><tbody>';
+    lossFunds.forEach((lf, i) => {
+      html += '<tr style="border-bottom:1px solid #fecaca;background:' + (i % 2 ? '#fff5f5' : '#fff') + '">'
+        + '<td style="padding:10px 12px;font-weight:700;color:#991b1b">' + escH(lf.name) + '</td>'
+        + '<td style="padding:10px 8px;color:#64748b;font-weight:600">' + escH(lf.category) + '</td>'
+        + '<td style="padding:10px 8px;text-align:right;font-weight:900;color:#dc2626;font-size:13px">-' + inr(lf.loss) + '</td>'
+        + '<td style="padding:10px 8px;text-align:right">' + inr(lf.invested) + '</td>'
+        + '<td style="padding:10px 8px;text-align:right">' + inr(lf.current) + '</td>'
+        + '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+  }
+
+  container.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════
+// HARVEST WIZARD — PAGE 3: FINAL REPORT
+// ═══════════════════════════════════════════════
+function renderHarvestReport() {
+  if (!lastHarvestResult) return;
+  const { harvestPlan, lossFunds, taxSaved, totalHarvested, remainingExemption } = lastHarvestResult;
+  const cl = getClient();
+  const clientName = cl.name || 'Client';
+  const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  // Load MFAPI in background
+  loadMFAPISchemes();
+
+  // Determine risk bucket for reinvestment suggestions
+  const age = parseInt(cl.age) || 35;
+  const risk = (cl.risk || '').toLowerCase();
+  let riskBucket = 'moderate';
+  if (risk.includes('conservative')) riskBucket = 'conservative';
+  else if (risk.includes('aggressive') && !risk.includes('moderate')) riskBucket = 'aggressive';
+  if (age > 55 && riskBucket === 'aggressive') riskBucket = 'moderate';
+  if (age > 65) riskBucket = 'conservative';
+
+  const container = document.getElementById('harvest-report-content');
+  let html = '<div style="border:3px solid var(--navy);border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.12)">';
+
+  // Header
+  html += '<div style="background:linear-gradient(135deg,#0f2b46,#1B3A6B);padding:20px 24px">'
+    + '<div style="font-size:9px;color:rgba(255,255,255,.35);font-family:monospace;margin-bottom:4px">MERASIP  TRUSTNER ASSET SERVICES  ARN-286886</div>'
+    + '<div style="font-size:20px;font-weight:900;color:#fff;letter-spacing:.5px">S.M.A.R.T Tax Harvest Plan</div>'
+    + '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">' + escH(clientName) + ' | FY 2025-26 | ' + today + '</div>'
+    // Summary cards
+    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px">'
+    + [
+      [inr(LTCG_LIMIT), 'LTCG EXEMPTION LIMIT', '#86EFAC', ''],
+      [inr(cl.ltcg), 'ALREADY REALISED', '#FCD34D', ''],
+      [inr(remainingExemption), 'ROOM LEFT', '#86EFAC', ''],
+      [inr(taxSaved), 'TAX SAVED @12.5%', '#86EFAC', 'border:2px solid rgba(134,239,172,.4);background:rgba(134,239,172,.1)'],
+    ].map(([v, l, c, extra]) => '<div style="background:rgba(255,255,255,.07);border-radius:10px;padding:12px 14px;text-align:center;' + extra + '"><div style="font-size:20px;font-weight:900;color:' + c + '">' + v + '</div><div style="font-size:8px;color:rgba(255,255,255,.4);margin-top:4px;letter-spacing:.5px;font-weight:700">' + l + '</div></div>').join('')
+    + '</div></div>';
+
+  // Body
+  html += '<div style="background:#fff;padding:20px 24px">';
+
+  // Harvest table (clean, non-editable)
+  if (harvestPlan.length > 0) {
+    html += '<div style="margin-bottom:20px">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:16px">Step 1:</span><span style="font-size:13px;font-weight:900;color:var(--navy)">Harvest These Funds (LTCG Tax-Free under 1.25L Exemption)</span></div>'
+      + '<div style="overflow-x:auto;border-radius:10px;border:2px solid #e2e8f0">'
+      + '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+      + '<thead><tr style="background:linear-gradient(135deg,#0f2b46,#1B3A6B);color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:.5px">'
+      + '<th style="padding:10px 10px;text-align:left;font-weight:800">Fund Name</th>'
+      + '<th style="padding:10px 6px;text-align:right;font-weight:800">Total Units</th>'
+      + '<th style="padding:10px 6px;text-align:right;font-weight:800">NAV</th>'
+      + '<th style="padding:10px 6px;text-align:right;font-weight:800">Total Gain</th>'
+      + '<th style="padding:10px 6px;text-align:right;font-weight:800">LTCG to Harvest</th>'
+      + '<th style="padding:10px 6px;text-align:right;font-weight:800;color:#86EFAC">Units to Sell</th>'
+      + '<th style="padding:10px 6px;text-align:right;font-weight:800">Sell Value</th>'
+      + '<th style="padding:10px 6px;text-align:center;font-weight:800">Action</th>'
+      + '</tr></thead><tbody>';
+
+    let totalSellValue = 0;
+    harvestPlan.forEach((p, i) => {
+      totalSellValue += p.sellValue;
+      const hasUnits = p.exactUnits > 0;
+      html += '<tr style="border-bottom:1px solid #f0f0f0;background:' + (i % 2 ? '#f8fafc' : '#fff') + '">'
+        + '<td style="padding:10px 10px;max-width:180px"><div style="font-weight:700;color:var(--navy);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + escH(p.name) + '">' + escH(p.name) + '</div><div style="font-size:9px;color:#94a3b8;margin-top:1px">' + escH(p.category) + '</div></td>'
+        + '<td style="padding:10px 6px;text-align:right;color:#64748b;font-weight:600">' + (hasUnits ? p.totalUnits.toFixed(3) : '—') + '</td>'
+        + '<td style="padding:10px 6px;text-align:right;color:#64748b;font-weight:600">' + (p.nav > 0 ? p.nav.toFixed(2) : '—') + '</td>'
+        + '<td style="padding:10px 6px;text-align:right;color:#64748b;font-weight:600">' + inr(p.totalGain) + '</td>'
+        + '<td style="padding:10px 6px;text-align:right;font-weight:900;font-size:13px;color:#16a34a">' + inr(p.ltcgToHarvest) + '</td>'
+        + '<td style="padding:10px 6px;text-align:right;font-weight:900;font-size:12px;color:var(--navy);background:#e8eef820">'
+        + (hasUnits
+          ? '<div>' + p.exactUnits.toFixed(3) + '</div><div style="font-size:8px;color:#94a3b8;font-weight:600">' + p.pctOfHolding + '% of holding</div>'
+          : p.pctOfHolding + '%')
+        + '</td>'
+        + '<td style="padding:10px 6px;text-align:right;font-weight:700;color:var(--navy)">' + inr(p.sellValue) + '</td>'
+        + '<td style="padding:10px 6px;text-align:center"><span style="display:inline-block;padding:4px 8px;border-radius:6px;font-size:9px;font-weight:800;background:#d1fae5;color:#065f46">Switch / Rebuy</span></td>'
+        + '</tr>';
+    });
+
+    html += '<tr style="background:linear-gradient(135deg,#0f2b46,#1B3A6B);color:#fff;font-weight:900;font-size:11px">'
+      + '<td style="padding:12px 10px" colspan="4">TOTAL HARVEST (' + harvestPlan.length + ' funds)</td>'
+      + '<td style="padding:12px 6px;text-align:right;color:#86EFAC;font-size:15px">' + inr(totalHarvested) + '</td>'
+      + '<td style="padding:12px 6px;text-align:right;color:#86EFAC;font-size:11px"></td>'
+      + '<td style="padding:12px 6px;text-align:right;color:#FCD34D">' + inr(totalSellValue) + '</td>'
+      + '<td style="padding:12px 6px;text-align:center;color:#86EFAC">TAX = 0 | Saved: ' + inr(taxSaved) + '</td>'
+      + '</tr></tbody></table></div></div>';
+  } else {
+    html += '<div style="background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:16px;margin-bottom:20px;text-align:center;color:#065f46;font-size:13px;font-weight:700">'
+      + (remainingExemption <= 0 ? 'LTCG exemption fully utilised for FY 2025-26. No harvesting needed.' : 'No equity funds with LTCG available for harvesting.')
+      + '</div>';
+  }
+
+  // Loss Harvest section
+  const catSuggestions = {
+    'Small Cap': 'Nippon India Small Cap Fund',
+    'Mid Cap': 'HDFC Mid Cap Opportunities Fund',
+    'Large Cap': 'Nippon India Large Cap Fund',
+    'Flexi Cap': 'HDFC Flexi Cap Fund',
+    'Multi Cap': 'Kotak Multicap Fund',
+    'Multi Asset': 'ICICI Pru Multi Asset Fund',
+    'ELSS': 'ICICI Prudential ELSS Tax Saver',
+    'Sector/Thematic': 'ICICI Pru Energy Opp Fund',
+    'Aggressive Hybrid': 'ICICI Pru Equity & Debt Fund',
+    'BAF': 'HDFC Balanced Advantage Fund',
+  };
+  const totalRealizedGains = funds.reduce((s, f) => { const g = f.current - f.invested; return s + (g > 0 ? g : 0); }, 0);
+  if (lossFunds.length > 0 && totalRealizedGains > 0) {
+    html += '<div style="margin-bottom:20px">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:16px">Step 2:</span><span style="font-size:13px;font-weight:900;color:#dc2626">Loss Harvesting Opportunities</span></div>'
+      + '<div style="overflow-x:auto;border-radius:10px;border:2px solid #fecaca">'
+      + '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+      + '<thead><tr style="background:#fef2f2;color:#991b1b;font-size:10px;text-transform:uppercase;letter-spacing:.5px">'
+      + '<th style="padding:10px 12px;text-align:left;font-weight:800">Fund</th>'
+      + '<th style="padding:10px 8px;text-align:left;font-weight:800">Category</th>'
+      + '<th style="padding:10px 8px;text-align:right;font-weight:800">Loss Amount</th>'
+      + '<th style="padding:10px 8px;text-align:right;font-weight:800">Invested</th>'
+      + '<th style="padding:10px 8px;text-align:right;font-weight:800">Current Value</th>'
+      + '<th style="padding:10px 8px;text-align:left;font-weight:800">Switch To</th>'
+      + '</tr></thead><tbody>';
+    lossFunds.forEach((lf, i) => {
+      const suggestedFund = catSuggestions[lf.category] || 'Better fund in same category';
+      html += '<tr style="border-bottom:1px solid #fecaca;background:' + (i % 2 ? '#fff5f5' : '#fff') + '">'
+        + '<td style="padding:10px 12px;font-weight:700;color:#991b1b">' + escH(lf.name) + '</td>'
+        + '<td style="padding:10px 8px;color:#64748b;font-weight:600">' + escH(lf.category) + '</td>'
+        + '<td style="padding:10px 8px;text-align:right;font-weight:900;color:#dc2626;font-size:13px">-' + inr(lf.loss) + '</td>'
+        + '<td style="padding:10px 8px;text-align:right">' + inr(lf.invested) + '</td>'
+        + '<td style="padding:10px 8px;text-align:right">' + inr(lf.current) + '</td>'
+        + '<td style="padding:10px 8px"><div style="position:relative"><input type="text" class="fund-search-input" value="' + escH(suggestedFund) + '" '
+        + 'style="font-size:10px;font-weight:700;color:var(--navy);border:1.5px solid #e2e8f0;border-radius:5px;padding:4px 8px;width:100%;min-width:160px;background:#fff" '
+        + 'placeholder="Search fund..." autocomplete="off"></div></td>'
+        + '</tr>';
+    });
+    html += '</tbody></table></div></div>';
+  }
+
+  // Reinvestment suggestions with editable search inputs
+  html += '<div style="margin-bottom:20px">'
+    + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:16px">Step 3:</span><span style="font-size:13px;font-weight:900;color:var(--navy)">Reinvestment Suggestions (Risk: ' + riskBucket.charAt(0).toUpperCase() + riskBucket.slice(1) + ', Age ' + (cl.age || '—') + ')</span></div>';
+
+  // Show only the recommended profile's suggestions with editable inputs
+  const suggestFunds = REINVEST_SUGGESTIONS[riskBucket] || [];
+  html += '<div style="overflow-x:auto;border-radius:10px;border:2px solid #e2e8f0">'
+    + '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+    + '<thead><tr style="background:#f8fafc"><th style="padding:8px 10px;text-align:left;font-weight:800;color:#64748b">Fund</th><th style="padding:8px;text-align:left;font-weight:800;color:#64748b">Category</th><th style="padding:8px;text-align:left;font-weight:800;color:#64748b">Return</th></tr></thead><tbody>';
+  suggestFunds.forEach((s, si) => {
+    html += '<tr style="border-bottom:1px solid #f0f0f0">'
+      + '<td style="padding:8px 10px"><div style="position:relative"><input type="text" class="fund-search-input" value="' + escH(s.name) + '" '
+      + 'style="font-weight:700;color:var(--navy);font-size:11px;border:1.5px solid #e2e8f0;border-radius:5px;padding:4px 8px;width:100%;min-width:200px;background:#fff" '
+      + 'autocomplete="off"></div>'
+      + '<div style="font-size:9px;color:#94a3b8;margin-top:2px;padding-left:8px">' + escH(s.why) + '</div></td>'
+      + '<td style="padding:8px;font-size:10px;color:#64748b;font-weight:600">' + escH(s.cat) + '</td>'
+      + '<td style="padding:8px;font-size:11px;color:#16a34a;font-weight:800">' + escH(s.ret) + '</td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  // Execution Steps
+  html += '<div style="margin-bottom:18px">'
+    + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:13px;font-weight:900;color:var(--navy)">Execution Steps</span></div>'
+    + '<div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border-radius:12px;padding:18px 22px;border:2px solid #bae6fd">';
+
+  if (harvestPlan.length > 0) {
+    const steps = [];
+    steps.push('Log in to AMC portal / MF Central / MFU for each fund house');
+    steps.push('<strong>Redeem these exact units</strong> to book tax-free LTCG:<br>' + harvestPlan.map(p => {
+      const shortName = escH(p.name.split(' ').slice(0, 4).join(' '));
+      if (p.exactUnits > 0) {
+        return '&nbsp;&nbsp;' + shortName + ': Sell <strong>' + p.exactUnits.toFixed(3) + ' units</strong> (' + p.pctOfHolding + '%) = ' + inr(p.sellValue) + ' LTCG ' + inr(p.ltcgToHarvest) + ' (tax-free)';
+      }
+      return '&nbsp;&nbsp;' + shortName + ': Sell ' + p.pctOfHolding + '% of holding  LTCG ' + inr(p.ltcgToHarvest) + ' (tax-free)';
+    }).join('<br>'));
+    steps.push('<strong>Reinvest</strong> within 1-2 business days — switch within same AMC or rebuy the same fund');
+    if (lossFunds.length > 0) {
+      steps.push('<strong>Book losses</strong> in: ' + lossFunds.map(lf => escH(lf.name.split(' ').slice(0, 4).join(' '))).join(', ') + ' — offset against taxable gains');
+    }
+    steps.push('Complete before <strong>March 31, 2026</strong> to utilise FY 2025-26 LTCG exemption');
+    steps.push('Keep redemption confirmations for <strong>ITR filing</strong>');
+
+    html += '<div style="display:flex;flex-direction:column;gap:10px">';
+    steps.forEach((s, i) => {
+      html += '<div style="display:flex;gap:10px;align-items:flex-start">'
+        + '<div style="min-width:28px;height:28px;background:var(--navy);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900">' + (i + 1) + '</div>'
+        + '<div style="font-size:12px;color:#1e293b;line-height:1.7;padding-top:4px">' + s + '</div>'
+        + '</div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div style="text-align:center;color:#64748b;font-size:12px">No harvesting actions required at this time.</div>';
+  }
+
+  html += '</div></div>';
+
+  // Disclaimer
+  html += '<div style="font-size:9px;color:#94a3b8;line-height:1.6;padding:10px 0;border-top:1px solid #e2e8f0;margin-top:8px">'
+    + 'All calculations are based on current applicable tax laws (Income Tax Act, 1961). Users are advised to consult a tax professional for final decisions. '
+    + 'Past performance does not guarantee future returns. Mutual fund investments are subject to market risk.</div>';
+
+  html += '</div></div>'; // close body and outer card
+
+  // Buttons
+  html += '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:14px" class="no-print harvest-wizard-btn">'
+    + '<button class="btn btn-outline btn-lg" onclick="showScreen(\'harvest-calc\')">← Back</button>'
+    + '<button class="btn btn-primary btn-lg" onclick="window.print()">Print Report</button>'
+    + '</div>';
+
+  container.innerHTML = html;
 }
 
 // ═══════════════════════════════════════════════
