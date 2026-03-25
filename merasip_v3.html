@@ -1372,9 +1372,9 @@ function renderReportHarvestPlan(cl, results) {
     if(!EQUITY_CATS.includes(f.category)) return;
     if(holdingYears(f.purchaseDate)<1) return;
     const totalG = f.current - f.invested;
+    if(totalG <= 0) return;
     const ltcg = f.ltcgGain || 0;
-    if(ltcg <= 0 && totalG <= 0) return;
-    const g = ltcg > 0 ? ltcg : totalG;
+    const g = (ltcg > 0 && ltcg <= totalG) ? ltcg : totalG;
     harvestable.push({...f, idx:i, gain:g, totalGain:totalG});
   });
   harvestable.sort((a,b)=>b.gain-a.gain);
@@ -2258,9 +2258,9 @@ function generateHarvestPlan() {
     const yrs = holdingYears(f.purchaseDate);
     if (yrs < 1) return;
     const totalGain = f.current - f.invested;
+    if (totalGain <= 0) return;  // Fund must have OVERALL positive gain to harvest
     const ltcg = f.ltcgGain || 0;
-    if (ltcg <= 0 && totalGain <= 0) return;
-    const gain = ltcg > 0 ? ltcg : totalGain;
+    const gain = (ltcg > 0 && ltcg <= totalGain) ? ltcg : totalGain;  // LTCG can't exceed total gain
     equityLTCGFunds.push({ ...f, idx: i, gain, totalGain, yrs });
   });
   equityLTCGFunds.sort((a, b) => b.gain - a.gain);
@@ -3257,8 +3257,9 @@ function renderHarvestSelect() {
     const totalGain = f.current - f.invested;
     const ltcg = f.ltcgGain || 0;
     const stcg = f.stcgGain || 0;
-    const hasLTCG = yrs >= 1 && ltcg > 0 && isEquity;
-    eligible.push({ idx: i, isEquity, yrs, gain: totalGain, hasLTCG, ltcg: ltcg, stcg: stcg });
+    const hasLTCG = yrs >= 1 && totalGain > 0 && ltcg > 0 && isEquity;  // Must have positive OVERALL gain
+    const cappedLtcg = (ltcg > 0 && ltcg <= totalGain) ? ltcg : (totalGain > 0 ? totalGain : 0);
+    eligible.push({ idx: i, isEquity, yrs, gain: totalGain, hasLTCG, ltcg: cappedLtcg, stcg: stcg });
   });
 
   // Greedy: sort by LTCG descending, fill exemption
@@ -3397,7 +3398,7 @@ function computeHarvestPlan(selectedIndices) {
   const cl = getClient();
   const remainingExemption = Math.max(0, LTCG_LIMIT - cl.ltcg);
 
-  // Filter to selected equity LTCG funds — use ltcgGain (not total gain)
+  // Filter to selected equity LTCG funds — must have positive OVERALL gain
   const equityLTCGFunds = [];
   selectedIndices.forEach(i => {
     const f = funds[i];
@@ -3405,9 +3406,9 @@ function computeHarvestPlan(selectedIndices) {
     const yrs = holdingYears(f.purchaseDate);
     if (yrs < 1) return;
     const totalGain = f.current - f.invested;
-    const ltcg = f.ltcgGain || 0;  // Use parsed LTCG, not total gain
-    if (ltcg <= 0 && totalGain <= 0) return;
-    const gain = ltcg > 0 ? ltcg : totalGain;  // Prefer ltcgGain if available
+    if (totalGain <= 0) return;  // Fund must have overall positive gain
+    const ltcg = f.ltcgGain || 0;
+    const gain = (ltcg > 0 && ltcg <= totalGain) ? ltcg : totalGain;  // LTCG can't exceed total gain
     equityLTCGFunds.push({ ...f, idx: i, gain, totalGain, yrs });
   });
   equityLTCGFunds.sort((a, b) => b.gain - a.gain);
