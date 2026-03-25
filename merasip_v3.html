@@ -1412,7 +1412,7 @@ function renderReportHarvestPlan(cl, results) {
   }
 
   const lossFunds=[];
-  funds.forEach(f=>{const g=f.current-f.invested;if(g<0)lossFunds.push({name:f.name,category:getCatLabel(f.category),loss:Math.abs(g)});});
+  funds.forEach(f=>{const g=f.current-f.invested;if(g<0){const lp=Math.abs(g)/f.invested;if(lp>0.8&&Math.abs(g)>50000)return;lossFunds.push({name:f.name,category:getCatLabel(f.category),loss:Math.abs(g)});}});
 
   let riskBucket='moderate';
   if(risk.includes('conservative'))riskBucket='conservative';
@@ -2007,6 +2007,20 @@ function parsePortfolioText(txt) {
       latestNAV = Math.round((current / totalUnits) * 100) / 100;
     }
 
+    // Sanity check: if invested > 5x current and loss > 50K, likely parsing error
+    if(invested > current * 5 && (invested - current) > 50000) {
+      console.warn('[MeraSIP] Suspicious invested/current for', fb.name, '→ Invested:', invested, 'Current:', current, '— likely parsing error, skipping');
+      // Try to fix: if current looks reasonable and invested is way too high
+      // Check if there's a smaller invested value from header
+      if(firstNums.length > 1) {
+        const altInvested = firstNums[firstNums[0] > 10000 ? 1 : 0];
+        if(altInvested > 0 && altInvested < current * 3) {
+          invested = altInvested;
+          console.log('[MeraSIP] Fixed invested to', invested);
+        }
+      }
+    }
+
     result.funds.push({
       name: fb.name,
       category: cat,
@@ -2181,11 +2195,13 @@ function generateHarvestPlan() {
     filled += amountNeeded;
   }
 
-  // Step 3: Loss harvesting opportunities
+  // Step 3: Loss harvesting opportunities — with sanity check
   const lossFunds = [];
   funds.forEach((f, i) => {
     const gain = f.current - f.invested;
     if (gain < 0) {
+      const lossPct = Math.abs(gain) / f.invested;
+      if (lossPct > 0.8 && Math.abs(gain) > 50000) return; // Skip suspicious parsing errors
       lossFunds.push({ name: f.name, category: getCatLabel(f.category), loss: Math.abs(gain), invested: f.invested, current: f.current });
     }
   });
@@ -3296,11 +3312,17 @@ function computeHarvestPlan(selectedIndices) {
     filled += amountNeeded;
   }
 
-  // Loss harvesting opportunities
+  // Loss harvesting opportunities — with sanity check
   const lossFunds = [];
   funds.forEach((f, i) => {
     const gain = f.current - f.invested;
     if (gain < 0) {
+      // Sanity check: skip if loss > 80% of invested (likely parsing error)
+      const lossPct = Math.abs(gain) / f.invested;
+      if (lossPct > 0.8 && Math.abs(gain) > 50000) {
+        console.warn('[MeraSIP] Skipping suspicious loss:', f.name, 'Invested:', f.invested, 'Current:', f.current, 'Loss%:', (lossPct*100).toFixed(1)+'%');
+        return;
+      }
       lossFunds.push({ name: f.name, category: getCatLabel(f.category), loss: Math.abs(gain), invested: f.invested, current: f.current });
     }
   });
