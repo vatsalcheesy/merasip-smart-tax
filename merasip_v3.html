@@ -3061,6 +3061,30 @@ document.addEventListener('click', function(e) {
   }
 });
 
+// Listen for fund selection — update category & return cells
+document.addEventListener('fundselected', function(e) {
+  const inp = e.target;
+  const rowIdx = inp.dataset.rowIdx || '';
+  const cat = inp.dataset.fundCat || '';
+  const ret = inp.dataset.fundRet || '';
+  const nav = inp.dataset.mfapiNav || '';
+
+  // Update category cell
+  const catCell = document.getElementById(rowIdx.startsWith('suggest') ? 'suggest-cat-' + rowIdx.replace('suggest-','') : 'loss-cat-' + rowIdx);
+  if (catCell && cat) catCell.textContent = cat;
+
+  // Update return cell — show return if from FUND_DB, or NAV if from MFAPI
+  const retCell = document.getElementById(rowIdx.startsWith('suggest') ? 'suggest-ret-' + rowIdx.replace('suggest-','') : 'loss-ret-' + rowIdx);
+  if (retCell) {
+    if (ret) retCell.textContent = ret;
+    else if (nav) retCell.innerHTML = 'NAV: ₹' + parseFloat(nav).toFixed(2);
+  }
+
+  // Update description
+  const descCell = document.getElementById(rowIdx.startsWith('suggest') ? 'suggest-desc-' + rowIdx.replace('suggest-','') : null);
+  if (descCell && cat) descCell.textContent = cat + ' fund — selected by advisor';
+});
+
 // ═══════════════════════════════════════════════
 // HARVEST WIZARD — PAGE 1: FUND SELECTION
 // ═══════════════════════════════════════════════
@@ -3466,6 +3490,23 @@ function renderHarvestReport() {
     ].map(([v, l, c, extra]) => '<div style="background:rgba(255,255,255,.07);border-radius:10px;padding:12px 14px;text-align:center;' + extra + '"><div style="font-size:20px;font-weight:900;color:' + c + '">' + v + '</div><div style="font-size:8px;color:rgba(255,255,255,.4);margin-top:4px;letter-spacing:.5px;font-weight:700">' + l + '</div></div>').join('')
     + '</div></div>';
 
+  // Client details
+  html += '<div style="background:#f8fafc;padding:14px 24px;border-bottom:2px solid #e2e8f0">'
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px 24px;font-size:11px">';
+  const clientFields = [
+    ['Client', clientName],
+    ['PAN', cl.pan || '—'],
+    ['Age', cl.age || '—'],
+    ['Tax Regime', cl.regime === 'old' ? 'Old' : 'New'],
+    ['Risk Profile', cl.risk || '—'],
+    ['Tax Slab', (cl.slab || 30) + '%'],
+    ['LTCG Realised', inr(cl.ltcg || 0)],
+  ];
+  clientFields.forEach(([label, val]) => {
+    html += '<div><span style="color:#94a3b8;font-weight:600">' + label + ':</span> <span style="color:var(--navy);font-weight:700">' + escH(String(val)) + '</span></div>';
+  });
+  html += '</div></div>';
+
   // Body
   html += '<div style="background:#fff;padding:20px 24px">';
 
@@ -3573,12 +3614,12 @@ function renderHarvestReport() {
     + '<thead><tr style="background:#f8fafc"><th style="padding:8px 10px;text-align:left;font-weight:800;color:#64748b">Fund</th><th style="padding:8px;text-align:left;font-weight:800;color:#64748b">Category</th><th style="padding:8px;text-align:left;font-weight:800;color:#64748b">Return</th></tr></thead><tbody>';
   suggestFunds.forEach((s, si) => {
     html += '<tr style="border-bottom:1px solid #f0f0f0">'
-      + '<td style="padding:8px 10px"><div style="position:relative"><input type="text" class="fund-search-input" value="' + escH(s.name) + '" '
+      + '<td style="padding:8px 10px"><div style="position:relative"><input type="text" class="fund-search-input" data-row-idx="suggest-'+si+'" value="' + escH(s.name) + '" '
       + 'style="font-weight:700;color:var(--navy);font-size:11px;border:1.5px solid #e2e8f0;border-radius:5px;padding:4px 8px;width:100%;min-width:200px;background:#fff" '
       + 'autocomplete="off"></div>'
-      + '<div style="font-size:9px;color:#94a3b8;margin-top:2px;padding-left:8px">' + escH(s.why) + '</div></td>'
-      + '<td style="padding:8px;font-size:10px;color:#64748b;font-weight:600">' + escH(s.cat) + '</td>'
-      + '<td style="padding:8px;font-size:11px;color:#16a34a;font-weight:800">' + escH(s.ret) + '</td>'
+      + '<div id="suggest-desc-'+si+'" style="font-size:9px;color:#94a3b8;margin-top:2px;padding-left:8px">' + escH(s.why) + '</div></td>'
+      + '<td id="suggest-cat-'+si+'" style="padding:8px;font-size:10px;color:#64748b;font-weight:600">' + escH(s.cat) + '</td>'
+      + '<td id="suggest-ret-'+si+'" style="padding:8px;font-size:11px;color:#16a34a;font-weight:800">' + escH(s.ret) + '</td>'
       + '</tr>';
   });
   html += '</tbody></table></div></div>';
