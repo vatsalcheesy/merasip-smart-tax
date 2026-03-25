@@ -1600,6 +1600,35 @@ async function handleFileUpload(inp) {
         txt+=ct.items.map(x=>x.str).join(' ')+'\n';
         if(p%5===0||p===pdf.numPages)uploadLog('  Extracted '+p+'/'+pdf.numPages+' pages');
       }
+    } else if(file.name.endsWith('.xlsx') || file.name.endsWith('.xls')){
+      uploadLog('Loading Excel engine...');
+      if(!window.XLSX){
+        await new Promise((res,rej)=>{
+          const s=document.createElement('script');
+          s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+          s.onload=res; s.onerror=rej; document.head.appendChild(s);
+        });
+      }
+      const buf=await file.arrayBuffer();
+      const wb=window.XLSX.read(buf,{type:'array'});
+      uploadLog('Parsing Excel sheets...');
+      // Parse Excel into structured text that parsePortfolioText can handle
+      const parsed = parseExcelPortfolio(wb);
+      if(parsed && parsed.funds && parsed.funds.length > 0) {
+        uploadLog('✅ '+parsed.funds.length+' funds extracted from Excel');
+        if(parsed.clientName) { const el=document.getElementById('inp-name'); if(el&&!el.value) el.value=parsed.clientName; }
+        if(parsed.pan) { const el=document.getElementById('inp-pan'); if(el&&!el.value) el.value=parsed.pan; }
+        if(parsed.dob) { const el=document.getElementById('inp-age'); if(el&&!el.value) { const age=Math.floor((Date.now()-new Date(parsed.dob))/(365.25*86400000)); if(age>0&&age<120) el.value=age; } }
+        extractedPreview=parsed;
+        showPreview(parsed);
+        return;
+      }
+      // Fallback: convert to text
+      wb.SheetNames.forEach(sn=>{
+        const ws=wb.Sheets[sn];
+        txt+=window.XLSX.utils.sheet_to_csv(ws)+'\n';
+      });
+      uploadLog('Converted Excel to text ('+txt.length+' chars)');
     } else {
       txt=await file.text();
       uploadLog('File read ('+txt.length+' chars)');
@@ -1612,6 +1641,122 @@ async function handleFileUpload(inp) {
     showUploadError(e.message);
   }
 }
+// ═══ EXCEL PORTFOLIO PARSER ═══
+function parseExcelPortfolio(wb) {
+  const result = {clientName:'',pan:'',dob:'',funds:[]};
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  if(!ws) return result;
+  const rows = window.XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+
+  // Extract client info from first few rows
+  for(let i=0; i<Math.min(10,rows.length); i++) {
+    const row = rows[i].map(c => String(c||''));
+    const joined = row.join(' ');
+    const panM = joined.match(/([A-Z]{5}\d{4}[A-Z])/);
+    if(panM && !result.pan) result.pan = panM[1];
+    const dobM = joined.match(/DOB[\s.:]*(\d{2})-(\d{2})-(\d{4})/i);
+    if(dobM) result.dob = dobM[3]+'-'+dobM[2]+'-'+dobM[1];
+    // Client name is usually in row 2 or before PAN
+    if(i <= 2 && !result.clientName) {
+      const nameM = row[0].match(/^([A-Z][A-Z\s]{3,40}?)(\s*\(|$)/);
+      if(nameM) result.clientName = nameM[1].trim();
+    }
+  }
+
+  // Category detection
+  const catMap = [
+    [/aggressive\s*hybrid/i, 'hybrid'], [/balanced\s*adv|BAF/i, 'baf'],
+    [/small\s*cap/i, 'small'], [/mid\s*cap/i, 'mid'], [/large\s*&\s*mid|large.*mid/i, 'large-mid'],
+    [/large\s*cap/i, 'large'], [/flexi\s*cap/i, 'flexi'], [/multi\s*cap/i, 'multi'],
+    [/multi.?asset/i, 'multi-asset'], [/hybrid/i, 'hybrid'], [/elss|tax\s*sav/i, 'elss'],
+    [/index|nifty|sensex/i, 'index'],
+    [/debt|liquid|ultra\s*short|money\s*market|gilt|bond|overnight|corporate|short\s*dur/i, 'debt'],
+    [/overseas|global|international|FOF|foreign/i, 'intl-fof'],
+    [/value|contra/i, 'value'], [/sector|thematic|infra|pharma|bank|energy|consumption|tech/i, 'sector'],
+  ];
+
+  // Find fund header rows — they have "Inv. Since" or a date in brackets + numbers
+  // Excel format: Row with fund name has: Scheme Name, '', '', '', Inv.Since, Sensex, Inv.Cost, TDS, SD, DivR, Units, Pur.Nav, Cur.Nav, NavDate, Cur.Value...
+  // Then transaction rows: Sr.No, TransType, '', '', Date, Amount, TDS, SD, DivR, Price, Units, CummUnit, Sensex, CurValue...
+
+  let currentFund = null;
+  const fifoTxns = [];
+
+  for(let i=0; i<rows.length; i++) {
+    const row = rows[i].map(c => String(c||'').trim());
+    const r0 = row[0];
+
+    // Check if this is a fund header row (has scheme name with ISIN in brackets)
+    const isFundRow = r0.match(/\(INF[A-Z0-9]+\)/) || (r0.length > 15 && row[4] && String(row[4]).match(/\d{2}-\d{2}-\d{2}/) && parseFloat(row[6]) > 0);
+
+    if(isFundRow) {
+      // Save previous fund
+      if(currentFund) {
+        currentFund.fifoTxns = [...fifoTxns];
+        result.funds.push(currentFund);
+      }
+      fifoTxns.length = 0;
+
+      const name = r0.replace(/\s*\(INF[A-Z0-9]+\)\s*/g, '').trim();
+      let cat = 'flexi';
+      for(const [re,c] of catMap) { if(re.test(name)) { cat = c; break; } }
+
+      // Parse dates like "27-07-21 (1701 Days)" from col 4
+      const invSince = String(row[4]||'');
+      let purchaseDate = '';
+      const dateM = invSince.match(/(\d{2})-(\d{2})-(\d{2})/);
+      if(dateM) {
+        const yr = parseInt(dateM[3]);
+        purchaseDate = (yr > 50 ? '19' : '20') + dateM[3] + '-' + dateM[2] + '-' + dateM[1];
+      }
+
+      const invested = parseFloat(String(row[6]||'0').replace(/,/g,'')) || 0;
+      const units = parseFloat(String(row[10]||'0').replace(/,/g,'')) || 0;
+      const curNav = parseFloat(String(row[12]||'0').replace(/,/g,'')) || 0;
+      const current = parseFloat(String(row[14]||'0').replace(/,/g,'')) || 0;
+      const totalGain = parseFloat(String(row[18]||row[17]||'0').replace(/,/g,'')) || 0;
+
+      currentFund = {
+        name, category: cat, invested, current: current || (units * curNav),
+        purchaseDate, performance: 'good', amcQuality: 'strong', switchTarget: '',
+        units, nav: curNav, ltcgGain: 0, stcgGain: 0, taxBucket: '', taxType: '',
+      };
+      continue;
+    }
+
+    // Check if this is a transaction row (starts with a number, has "SIP Purchase" etc.)
+    const srNo = parseInt(r0);
+    const txnType = String(row[1]||'');
+    if(srNo > 0 && srNo < 500 && /Purchase|Switch In|STP In/i.test(txnType) && currentFund) {
+      const txnDate = String(row[4]||'');
+      const price = parseFloat(String(row[9]||'0').replace(/,/g,'')) || 0;
+      const txnUnits = parseFloat(String(row[10]||'0').replace(/,/g,'')) || 0;
+      const txnGain = parseFloat(String(row[17]||row[18]||'0').replace(/,/g,'')) || 0;
+      const days = parseInt(String(row[18]||row[19]||'0').replace(/,/g,'')) || 0;
+
+      // Classify LTCG vs STCG
+      const isEquity = ['hybrid','flexi','large','mid','small','multi','large-mid','elss','index','baf','sector'].includes(currentFund.category);
+      const ltcgThreshold = isEquity ? 365 : 730;
+
+      if(days >= ltcgThreshold) {
+        currentFund.ltcgGain += txnGain;
+      } else {
+        currentFund.stcgGain += txnGain;
+      }
+
+      fifoTxns.push({ units: txnUnits, price, days, gain: txnGain });
+    }
+  }
+
+  // Push last fund
+  if(currentFund) {
+    currentFund.fifoTxns = [...fifoTxns];
+    result.funds.push(currentFund);
+  }
+
+  return result;
+}
+
 async function runExtract() {
   const txt=document.getElementById('upload-paste').value;
   if(!txt.trim()){showUploadError('Please paste some text first.');return;}
@@ -1883,10 +2028,14 @@ function parsePortfolioText(txt) {
     const txnRegex = /\d+\s+(SIP Purchase|Switch In|S\s*T\s*P\s*In|Purchase|STP In|STP\s*In)\s+(\d{2}-\d{2}-\d{2})\s+/gi;
     let txnMatch;
     while((txnMatch = txnRegex.exec(blockText)) !== null) {
-      // Get the rest of this transaction line (all numbers after the date)
-      const txnRest = blockText.slice(txnMatch.index + txnMatch[0].length, txnMatch.index + txnMatch[0].length + 400);
-      const lineEnd = txnRest.indexOf('\n');
-      const txnLine = lineEnd > 0 ? txnRest.slice(0, lineEnd) : txnRest.slice(0, 300);
+      // Get the rest of this transaction (all numbers until next transaction or Total row)
+      const txnStart = txnMatch.index + txnMatch[0].length;
+      // Find next transaction or "Total" marker
+      const nextTxnRe = /\d+\s+(SIP Purchase|Switch In|S\s*T\s*P\s*In|Purchase|STP In|STP\s*In)\s+\d{2}-\d{2}-\d{2}|Total\s+[\d,]+\.\d/gi;
+      nextTxnRe.lastIndex = txnStart;
+      const nextMatch = nextTxnRe.exec(blockText);
+      const txnEnd = nextMatch ? nextMatch.index : Math.min(txnStart + 500, blockText.length);
+      const txnLine = blockText.slice(txnStart, txnEnd);
 
       // Extract all numbers from the line
       const nums = [];
@@ -1967,23 +2116,29 @@ function parsePortfolioText(txt) {
     }
 
     // Reconcile: if parsed LTCG+STCG != total gain, redistribute difference
+    // Reconciliation: only distribute unparsed difference if it's small (<15% of total gain)
+    // Large differences mean many transactions were missed — don't guess
     const parsedTotal = ltcgGain + stcgGain;
     if(Math.abs(parsedTotal - gain) > 1 && txnFound) {
       const diff = gain - parsedTotal;
-      // Smart assignment: if only one bucket has gains, assign diff there
-      // If both have gains, distribute proportionally
-      if(stcgGain === 0 && ltcgGain !== 0) {
-        ltcgGain += diff;
-      } else if(ltcgGain === 0 && stcgGain !== 0) {
-        stcgGain += diff;
-      } else if(ltcgGain !== 0 && stcgGain !== 0) {
-        const ratio = ltcgGain / parsedTotal;
-        ltcgGain += Math.round(diff * ratio * 100) / 100;
-        stcgGain += diff - Math.round(diff * ratio * 100) / 100;
+      const diffPct = Math.abs(diff) / Math.abs(gain || 1);
+      if(diffPct < 0.15) {
+        // Small difference — safe to distribute
+        if(stcgGain === 0 && ltcgGain !== 0) {
+          ltcgGain += diff;
+        } else if(ltcgGain === 0 && stcgGain !== 0) {
+          stcgGain += diff;
+        } else if(ltcgGain !== 0 && stcgGain !== 0) {
+          const ratio = ltcgGain / parsedTotal;
+          ltcgGain += Math.round(diff * ratio * 100) / 100;
+          stcgGain += diff - Math.round(diff * ratio * 100) / 100;
+        } else {
+          if(fb.days >= 365) ltcgGain += diff;
+          else stcgGain += diff;
+        }
       } else {
-        // Both zero — use overall holding
-        if(fb.days >= 365) ltcgGain += diff;
-        else stcgGain += diff;
+        // Large difference — don't redistribute, keep parsed values as-is
+        console.warn('[MeraSIP] Large gain mismatch for', fb.name, '→ Parsed:', parsedTotal, 'vs Total:', gain, 'Diff:', diff, '(' + (diffPct*100).toFixed(1) + '%) — keeping parsed LTCG/STCG as-is');
       }
     }
 
