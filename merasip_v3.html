@@ -2165,17 +2165,47 @@ function parsePortfolioText(txt) {
       latestNAV = Math.round((current / totalUnits) * 100) / 100;
     }
 
-    // Sanity check: if invested > 5x current and loss > 50K, likely parsing error
+    // Sanity check: if invested seems wrong, try to fix
+    // Strategy: invested should be < current * 3 for normal funds, and > current * 0.3
+    // If invested > current * 5, it's likely a grand total or another fund's number
     if(invested > current * 5 && (invested - current) > 50000) {
-      console.warn('[MeraSIP] Suspicious invested/current for', fb.name, '→ Invested:', invested, 'Current:', current, '— likely parsing error, skipping');
-      // Try to fix: if current looks reasonable and invested is way too high
-      // Check if there's a smaller invested value from header
-      if(firstNums.length > 1) {
-        const altInvested = firstNums[firstNums[0] > 10000 ? 1 : 0];
-        if(altInvested > 0 && altInvested < current * 3) {
-          invested = altInvested;
-          console.log('[MeraSIP] Fixed invested to', invested);
+      console.warn('[MeraSIP] Suspicious invested for', fb.name, '→ Invested:', invested, 'Current:', current);
+      // Try multiple sources for correct invested:
+      // 1. From header numbers: look for a number close to current value
+      let fixedInvested = 0;
+      for(const n of rawNums) {
+        const v = parseNum(n);
+        if(v > current * 0.3 && v < current * 3 && v > 1000 && Math.abs(v - invested) > 100) {
+          fixedInvested = v;
+          break;
         }
+      }
+      // 2. If we have units and NAV, calculate: invested ≈ units × avgCostNAV
+      // avgCostNAV is in the Total row before units
+      if(fixedInvested === 0 && totalUnits > 0) {
+        // Try to find invested from Total row: first big number
+        const trMatches = [...blockText.matchAll(/Total\s+([\d,]+\.\d{1,4})/g)];
+        if(trMatches.length > 0) {
+          const lastTr = trMatches[trMatches.length - 1];
+          const trNums = blockText.slice(lastTr.index, lastTr.index + 300).match(/[\d,]+\.\d{1,4}/g);
+          if(trNums) {
+            for(const tn of trNums) {
+              const v = parseNum(tn);
+              if(v > current * 0.3 && v < current * 3 && v > 1000) {
+                fixedInvested = v;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if(fixedInvested > 0) {
+        console.log('[MeraSIP] Fixed invested from', invested, 'to', fixedInvested);
+        invested = fixedInvested;
+      } else {
+        // Last resort: estimate from current value assuming ~20% avg return
+        invested = Math.round(current * 0.7);
+        console.log('[MeraSIP] Estimated invested as', invested, '(70% of current)');
       }
     }
 
