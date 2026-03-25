@@ -1405,23 +1405,12 @@ function renderReportHarvestPlan(cl, results) {
     let switchTo=catLbl+' fund ('+amcN+' or better)';
     const fU=f.units||0;
     const curNAV=f.nav>0?f.nav:(fU>0?f.current/fU:0);
-    // FIFO calculation
-    let exUnits=0,sellVal=0,costB=0,gainAcc=0;
-    const txns=(f.fifoTxns||[]).filter(t=>t.units>0&&t.days>=365);
-    if(txns.length>0&&curNAV>0){
-      txns.sort((a,b)=>b.days-a.days);
-      for(const t of txns){
-        if(gainAcc>=needed)break;
-        const ug=curNAV-t.price;if(ug<=0)continue;
-        const rem=needed-gainAcc;
-        const un=Math.min(rem/ug,t.units);
-        exUnits+=un;costB+=un*t.price;gainAcc+=un*ug;
-      }
-      sellVal=exUnits*curNAV;
-    }
-    if(exUnits===0&&fU>0){const ac=f.invested/fU;const gp=curNAV-ac;if(gp>0){exUnits=Math.min(needed/gp,fU);sellVal=exUnits*curNAV;}else{const fr=needed/f.gain;exUnits=fr*fU;sellVal=fr*f.current;}}
+    // Avg cost method (reliable with CAS data)
+    let exUnits=0,sellVal=0;
+    if(fU>0&&curNAV>0){const ac=f.invested/fU;const gp=curNAV-ac;if(gp>0){exUnits=Math.min(needed/gp,fU);sellVal=exUnits*curNAV;}else{const fr=Math.min(needed/f.gain,1);exUnits=fr*fU;sellVal=fr*f.current;}}
     const fraction=fU>0?exUnits/fU:0;
-    plan.push({name:f.name,category:getCatLabel(f.category),harvest:needed,pct:(fraction*100).toFixed(1),totalGain:f.gain,invested:f.invested,current:f.current,action:action,switchTo:switchTo,totalUnits:fU,nav:curNAV,exactUnits:exUnits,sellValue:sellVal});
+    const costB=exUnits*(f.invested/fU);
+    plan.push({name:f.name,category:getCatLabel(f.category),harvest:needed,pct:(fraction*100).toFixed(1),totalGain:f.gain,invested:f.invested,current:f.current,action:action,switchTo:switchTo,totalUnits:fU,nav:curNAV,exactUnits:exUnits,sellValue:sellVal,costBasis:costB});
     filled+=needed;
   }
 
@@ -2289,31 +2278,13 @@ function generateHarvestPlan() {
     const fUnits = f.units || 0;
     const currentNAV = f.nav > 0 ? f.nav : (fUnits > 0 ? f.current / fUnits : 0);
 
-    // FIFO: iterate oldest transactions first, accumulate gain until target
+    // Use avg cost method: LTCG = (currentNAV - avgCost) × units
+    // More reliable than FIFO with CAS data where transaction parsing can be inaccurate
     let exactUnits = 0;
     let sellValue = 0;
     let costBasis = 0;
-    let gainAccum = 0;
-    const txns = (f.fifoTxns || []).filter(t => t.units > 0 && t.days >= 365);
 
-    if (txns.length > 0 && currentNAV > 0) {
-      // Sort by days DESC (oldest first = highest days)
-      txns.sort((a, b) => b.days - a.days);
-      for (const t of txns) {
-        if (gainAccum >= amountNeeded) break;
-        const unitGain = currentNAV - t.price;
-        if (unitGain <= 0) continue;
-        const remainingGain = amountNeeded - gainAccum;
-        const unitsNeeded = Math.min(remainingGain / unitGain, t.units);
-        exactUnits += unitsNeeded;
-        costBasis += unitsNeeded * t.price;
-        gainAccum += unitsNeeded * unitGain;
-      }
-      sellValue = exactUnits * currentNAV;
-    }
-
-    // Fallback if FIFO data not available
-    if (exactUnits === 0 && fUnits > 0) {
+    if (fUnits > 0 && currentNAV > 0) {
       const avgCost = f.invested / fUnits;
       const gainPerUnit = currentNAV - avgCost;
       if (gainPerUnit > 0) {
@@ -2322,9 +2293,9 @@ function generateHarvestPlan() {
         costBasis = exactUnits * avgCost;
       } else {
         const fraction = amountNeeded / f.gain;
-        exactUnits = fraction * fUnits;
-        sellValue = fraction * f.current;
-        costBasis = fraction * f.invested;
+        exactUnits = Math.min(fraction * fUnits, fUnits);
+        sellValue = exactUnits * currentNAV;
+        costBasis = exactUnits * (f.invested / fUnits);
       }
     }
 
@@ -3443,22 +3414,9 @@ function computeHarvestPlan(selectedIndices) {
     let gainAccum = 0;
     const txns = (f.fifoTxns || []).filter(t => t.units > 0 && t.days >= 365);
 
-    if (txns.length > 0 && currentNAV > 0) {
-      txns.sort((a, b) => b.days - a.days);
-      for (const t of txns) {
-        if (gainAccum >= amountNeeded) break;
-        const unitGain = currentNAV - t.price;
-        if (unitGain <= 0) continue;
-        const remainingGain = amountNeeded - gainAccum;
-        const unitsNeeded = Math.min(remainingGain / unitGain, t.units);
-        exactUnits += unitsNeeded;
-        costBasis += unitsNeeded * t.price;
-        gainAccum += unitsNeeded * unitGain;
-      }
-      sellValue = exactUnits * currentNAV;
-    }
-
-    if (exactUnits === 0 && fUnits > 0) {
+    // Always use avg cost method (most reliable with CAS data)
+    // FIFO from parsed transactions is unreliable due to PDF parsing issues
+    if (fUnits > 0 && currentNAV > 0) {
       const avgCost = f.invested / fUnits;
       const gainPerUnit = currentNAV - avgCost;
       if (gainPerUnit > 0) {
@@ -3466,10 +3424,11 @@ function computeHarvestPlan(selectedIndices) {
         sellValue = exactUnits * currentNAV;
         costBasis = exactUnits * avgCost;
       } else {
+        // Edge case: avg cost method gives negative gain per unit
         const fraction = amountNeeded / f.gain;
-        exactUnits = fraction * fUnits;
-        sellValue = fraction * f.current;
-        costBasis = fraction * f.invested;
+        exactUnits = Math.min(fraction * fUnits, fUnits);
+        sellValue = exactUnits * currentNAV;
+        costBasis = exactUnits * (f.invested / fUnits);
       }
     }
 
