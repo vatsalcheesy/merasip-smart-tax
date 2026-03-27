@@ -2293,7 +2293,7 @@ function generateHarvestPlan() {
     const totalGain = f.current - f.invested;
     if (totalGain <= 0) return;  // Fund must have OVERALL positive gain to harvest
     const ltcg = f.ltcgGain || 0;
-    const gain = (ltcg > 0 && ltcg <= totalGain) ? ltcg : totalGain;  // LTCG can't exceed total gain
+    const gain = ltcg > 0 ? ltcg : (totalGain > 0 ? totalGain : 0);  // Use parsed LTCG as-is, don't net with STCG
     equityLTCGFunds.push({ ...f, idx: i, gain, totalGain, yrs });
   });
   equityLTCGFunds.sort((a, b) => b.gain - a.gain);
@@ -3275,9 +3275,8 @@ function renderHarvestSelect() {
     const totalGain = f.current - f.invested;
     const ltcg = f.ltcgGain || 0;
     const stcg = f.stcgGain || 0;
-    const hasLTCG = yrs >= 1 && totalGain > 0 && ltcg > 0 && isEquity;  // Must have positive OVERALL gain
-    const cappedLtcg = (ltcg > 0 && ltcg <= totalGain) ? ltcg : (totalGain > 0 ? totalGain : 0);
-    eligible.push({ idx: i, isEquity, yrs, gain: totalGain, hasLTCG, ltcg: cappedLtcg, stcg: stcg });
+    const hasLTCG = yrs >= 0.9 && ltcg > 0 && isEquity;  // Don't require positive total gain — LTCG and STCG are independent
+    eligible.push({ idx: i, isEquity, yrs, gain: totalGain, hasLTCG, ltcg: ltcg, stcg: stcg });
   });
 
   // Greedy: sort by LTCG descending, fill exemption
@@ -3338,7 +3337,7 @@ function renderHarvestSelect() {
       + '<td style="padding:8px 6px;text-align:right">' + inr(f.current) + '</td>'
       + '<td style="padding:8px 6px;text-align:right;color:' + gc(gain) + ';font-weight:700">' + inr(gain, true) + '</td>'
       + '<td style="padding:8px 6px;text-align:right;color:' + (ltcg > 0 ? 'var(--green)' : '#94a3b8') + ';font-weight:700">' + (ltcg > 0 ? inr(ltcg) : '—') + '</td>'
-      + '<td style="padding:8px 6px;text-align:right;color:' + (stcg > 0 ? 'var(--amber)' : '#94a3b8') + ';font-weight:700">' + (stcg > 0 ? inr(stcg) : '—') + '</td>'
+      + '<td style="padding:8px 6px;text-align:right;font-weight:700">' + (stcg !== 0 ? '<span style="color:' + (stcg > 0 ? 'var(--amber)' : '#dc2626') + '">' + inr(stcg, true) + '</span>' : '—') + '</td>'
       + '<td style="padding:8px 6px;text-align:center;font-size:10px;color:' + (yrs >= 1 ? 'var(--green)' : 'var(--amber)') + ';font-weight:700">' + holdStr + '</td>'
       + '<td style="padding:8px 6px;text-align:center">';
 
@@ -3426,7 +3425,7 @@ function computeHarvestPlan(selectedIndices) {
     const totalGain = f.current - f.invested;
     if (totalGain <= 0) return;  // Fund must have overall positive gain
     const ltcg = f.ltcgGain || 0;
-    const gain = (ltcg > 0 && ltcg <= totalGain) ? ltcg : totalGain;  // LTCG can't exceed total gain
+    const gain = ltcg > 0 ? ltcg : (totalGain > 0 ? totalGain : 0);  // Use parsed LTCG as-is, don't net with STCG
     equityLTCGFunds.push({ ...f, idx: i, gain, totalGain, yrs });
   });
   equityLTCGFunds.sort((a, b) => b.gain - a.gain);
