@@ -1730,7 +1730,7 @@ function parseExcelPortfolio(wb) {
     // Check if this is a transaction row (starts with a number, has "SIP Purchase" etc.)
     const srNo = parseInt(r0);
     const txnType = String(row[1]||'');
-    if(srNo > 0 && srNo < 500 && /Purchase|Switch In|STP In/i.test(txnType) && currentFund) {
+    if(srNo > 0 && srNo < 500 && /Purchase|Switch In|S\s*T\s*P\s*In|STP In/i.test(txnType) && currentFund) {
       const txnDate = String(row[4]||'');
       const price = parseFloat(String(row[9]||'0').replace(/,/g,'')) || 0;
       const txnUnits = parseFloat(String(row[10]||'0').replace(/,/g,'')) || 0;
