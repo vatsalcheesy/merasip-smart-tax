@@ -85,8 +85,19 @@ td{padding:7px 8px;border-bottom:1px solid var(--border)}
   #harvest-plan-container{display:block!important}
   #harvest-plan-body{display:block!important}
   #harvest-plan-container .card{break-inside:avoid;border:1px solid #333!important}
-  #harvest-plan-container table{font-size:10px}
-  #harvest-plan-container th,#harvest-plan-container td{padding:4px 6px!important}
+  #harvest-plan-container table{font-size:8px!important;width:100%!important;table-layout:fixed!important}
+  #harvest-plan-container th,#harvest-plan-container td{padding:3px 4px!important;word-wrap:break-word!important;overflow:hidden!important}
+  #harvest-report-content table{font-size:8px!important;width:100%!important;table-layout:fixed!important}
+  #harvest-report-content th,#harvest-report-content td{padding:3px 4px!important;word-wrap:break-word!important;overflow:hidden!important}
+  #harvest-report-content{padding:8px!important}
+  body{margin:0!important;padding:0!important}
+  .screen.active{padding:0 8px!important}
+  /* Compact all tables for print */
+  table{width:100%!important;max-width:100%!important;font-size:8px!important}
+  th,td{padding:3px 3px!important;font-size:8px!important;max-width:120px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  td div,td span{font-size:8px!important}
+  /* Shrink action buttons */
+  td span[style*="border-radius"]{padding:2px 4px!important;font-size:7px!important}
   /* Harvest wizard print styles */
   .harvest-wizard-btn{display:none!important}
   .fund-search-input{border:none!important;background:transparent!important;padding:0!important;font-weight:700!important}
